@@ -68,8 +68,6 @@ if(NOT IRON_BUILD_SHARED_LIBRARY AND NOT IRON_BUILD_STATIC_LIBRARY )
   message(FATAL_ERROR "You have to build at least one of the types of libraries (shared or static)." )
 endif()
 
-include(OCMiscFunctions)
-include(OCMultiConfigEnvironment)
 
 # See http://cmake.3232098.n2.nabble.com/How-to-install-Fortran-module-files-td7584399.html
 SET(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules)

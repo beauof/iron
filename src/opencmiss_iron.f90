@@ -168,6 +168,12 @@ MODULE OpenCMISS_Iron
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
   END TYPE cmfe_DecompositionType
 
+  !>Contains information on the coupling aware "Partitioning algorithm".
+  TYPE cmfe_CoupledDecompositionType
+    PRIVATE
+    TYPE(COUPLED_DECOMPOSITION_TYPE), POINTER :: Coupleddecomposition
+  END TYPE cmfe_CoupledDecompositionType
+
   !>Contains information about the equations in an equations set.
   TYPE cmfe_EquationsType
     PRIVATE
@@ -227,7 +233,7 @@ MODULE OpenCMISS_Iron
     PRIVATE
     TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: meshConnectivity
   END TYPE cmfe_InterfaceMeshConnectivityType
-  
+
   !>Contains information on an interfaces points connectivity.
   TYPE cmfe_InterfacePointsConnectivityType
     PRIVATE
@@ -331,7 +337,6 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Fields_CreateRegion
   END INTERFACE cmfe_Fields_Create
 
-  !PUBLIC cmfe_Finalise,cmfe_Initialise
   PUBLIC cmfe_Finalise,cmfe_Initialise
 
   PUBLIC cmfe_WorkingRealPrecisionGet
@@ -378,7 +383,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_InterfaceMeshConnectivityType,cmfe_InterfaceMeshConnectivity_Finalise, &
     & cmfe_InterfaceMeshConnectivity_Initialise
-  
+
   PUBLIC cmfe_InterfacePointsConnectivityType,cmfe_InterfacePointsConnectivity_Initialise, &
     & cmfe_InterfacePointsConnectivity_Finalise
 
@@ -401,6 +406,9 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_RegionType,cmfe_Region_Finalise,cmfe_Region_Initialise
 
   PUBLIC cmfe_SolverType,cmfe_Solver_Finalise,cmfe_Solver_Initialise
+
+  PUBLIC cmfe_CoupledDecompositionType,cmfe_CoupledDecomposition_Initialise, &
+    & cmfe_CoupledDecomposition_CreateStart
 
   PUBLIC cmfe_SolverEquationsType,cmfe_SolverEquations_Finalise,cmfe_SolverEquations_Initialise
 
@@ -495,7 +503,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_AnalyticAnalysis_IntegralNumericalValueGetNumber
     MODULE PROCEDURE cmfe_AnalyticAnalysis_IntegralNumericalValueGetObj
   END INTERFACE cmfe_AnalyticAnalysis_IntegralNumericalValueGet
-  
+
   !>Get integral of analytical values.
   INTERFACE cmfe_AnalyticAnalysis_IntegralAnalyticValueGet
     MODULE PROCEDURE cmfe_AnalyticAnalysis_IntegralAnalyticValueGetNumber
@@ -1309,7 +1317,7 @@ MODULE OpenCMISS_Iron
   PUBLIC CMFE_INTEGER_TYPE,CMFE_SHORT_INTEGER_TYPE,CMFE_LONG_INTEGER_TYPE,CMFE_SINGLE_REAL_TYPE,CMFE_DOUBLE_REAL_TYPE, &
     & CMFE_QUADRAUPLE_REAL_TYPE,CMFE_CHARACTER_TYPE,CMFE_LOGICAL_TYPE,CMFE_SINGLE_COMPLEX_TYPE,CMFE_DOUBLE_COMPLEX_TYPE, &
     & CMFE_QUADRUPLE_COMPLEX_TYPE
-  
+
   PUBLIC CMFE_NO_GLOBAL_DERIV,CMFE_GLOBAL_DERIV_S1,CMFE_GLOBAL_DERIV_S2,CMFE_GLOBAL_DERIV_S1_S2, &
     & CMFE_GLOBAL_DERIV_S3,CMFE_GLOBAL_DERIV_S1_S3,CMFE_GLOBAL_DERIV_S2_S3,CMFE_GLOBAL_DERIV_S1_S2_S3
 
@@ -1815,7 +1823,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_DestroyNumber
     MODULE PROCEDURE cmfe_DataProjection_DestroyObj
   END INTERFACE cmfe_DataProjection_Destroy
-  
+
   !>Evaluate the data points position in a field based on data projection
   INTERFACE cmfe_DataProjection_DataPointsPositionEvaluate
     MODULE PROCEDURE cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber
@@ -1864,7 +1872,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_NumberOfClosestElementsSetNumber
     MODULE PROCEDURE cmfe_DataProjection_NumberOfClosestElementsSetObj
   END INTERFACE cmfe_DataProjection_NumberOfClosestElementsSet
-  
+
   !>Set the candidate element numbers and their local face/line numbers
   INTERFACE cmfe_DataProjection_ProjectionCandidatesSet
     MODULE PROCEDURE cmfe_DataProjection_ProjectionCandidatesSetRegionNumber
@@ -1992,9 +2000,9 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_DataProjection_CreateFinish,cmfe_DataProjection_CreateStart
 
   PUBLIC cmfe_DataProjection_Destroy
-  
+
   PUBLIC cmfe_DataProjection_DataPointsPositionEvaluate
-  
+
   PUBLIC cmfe_DataProjection_ProjectionCandidatesSet
 
   PUBLIC cmfe_DataProjection_DataPointsProjectionEvaluate
@@ -2173,7 +2181,7 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Equations_NumberOfDynamicMatricesGet
 
   PUBLIC cmfe_Equations_LinearMatrixGet
-  
+
   PUBLIC cmfe_Equations_JacobianMatrixGet
 
   PUBLIC cmfe_Equations_DynamicMatrixGet
@@ -2278,9 +2286,9 @@ MODULE OpenCMISS_Iron
   & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
   & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Nearly Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE = &
     & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE !< Mooney-Rivlin constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE = &
     & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE !< St Venant Kirchoff constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE =&
     & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE !< Active contraction/costa-based law with quasistatic time loop for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
@@ -2346,13 +2354,13 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE !<Static Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE !<Laplace type Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE !<Transient Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE = &
     & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE =  &
     & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE = &
     & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled multiscale boundaries subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE = &
     & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled constitutive model for non-Newtonian viscosity \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE = &
     & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
@@ -2394,7 +2402,7 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE !<Constant source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = &
-    & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OPENCMISS_EquationsSetSubtypes,OPENCMISS  
+    & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE !<Quadratic source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE = &
@@ -3173,7 +3181,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_EquationsSet_DerivedVariableSetNumber
     MODULE PROCEDURE cmfe_EquationsSet_DerivedVariableSetObj
   END INTERFACE cmfe_EquationsSet_DerivedVariableSet
-  
+
   !>Calculate the strain tensor at a given element xi location.
   INTERFACE cmfe_EquationsSet_StrainInterpolateXi
     MODULE PROCEDURE cmfe_EquationsSet_StrainInterpolateXiNumber
@@ -3683,7 +3691,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Field_ParameterSetGetConstantLNumber
     MODULE PROCEDURE cmfe_Field_ParameterSetGetConstantLObj
   END INTERFACE cmfe_Field_ParameterSetGetConstant
-  
+
   !>Returns from the given parameter set a value for the specified data pont of a field variable component.
   INTERFACE cmfe_Field_ParameterSetGetDataPoint
     MODULE PROCEDURE cmfe_Field_ParameterSetGetDataPointIntgNumberI !Interface
@@ -3740,7 +3748,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Field_ParameterSetUpdateConstantLNumber
     MODULE PROCEDURE cmfe_Field_ParameterSetUpdateConstantLObj
   END INTERFACE cmfe_Field_ParameterSetUpdateConstant
-  
+
   !>Update the given parameter set a value for the specified data pont of a field variable component.
   INTERFACE cmfe_Field_ParameterSetUpdateDataPoint
     MODULE PROCEDURE cmfe_Field_ParameterSetUpdateDataPointIntgNumberI !Interface
@@ -3818,7 +3826,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGetObj
   END INTERFACE cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGet
 
-  !>Updates the given parameter set with the given values for all local dofs of the field variable.  
+  !>Updates the given parameter set with the given values for all local dofs of the field variable.
   INTERFACE cmfe_Field_ParameterSetUpdateLocalDofs
     MODULE PROCEDURE cmfe_Field_ParameterSetUpdateLocalDofsDPObj
     !\todo: add Intg/SP/L routines, both indexed by Number and Obj
@@ -4025,7 +4033,7 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Field_ParameterSetDataGet,cmfe_Field_ParameterSetDataRestore
 
   PUBLIC cmfe_Field_ParameterSetGetConstant,cmfe_Field_ParameterSetGetElement,cmfe_Field_ParameterSetGetNode
-  
+
   PUBLIC cmfe_Field_ParameterSetGetDataPoint,cmfe_Field_ParameterSetUpdateDataPoint
 
   PUBLIC cmfe_Field_ParameterSetUpdateConstant,cmfe_Field_ParameterSetUpdateElement,cmfe_Field_ParameterSetUpdateNode
@@ -4349,13 +4357,13 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Interface_CreateStartNumber
     MODULE PROCEDURE cmfe_Interface_CreateStartObj
   END INTERFACE cmfe_Interface_CreateStart
-  
+
   !>Set the coordinate system of an inteface
   INTERFACE cmfe_Interface_CoordinateSystemSet
     MODULE PROCEDURE cmfe_Interface_CoordinateSystemSetNumber
     MODULE PROCEDURE cmfe_Interface_CoordinateSystemSetObj
   END INTERFACE cmfe_Interface_CoordinateSystemSet
-  
+
   !>Get the coordinate system of an inteface
   INTERFACE cmfe_Interface_CoordinateSystemGet
     MODULE PROCEDURE cmfe_Interface_CoordinateSystemGetNumber
@@ -4430,49 +4438,49 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_InterfaceMeshConnectivity_DestroyNumber
     MODULE PROCEDURE cmfe_InterfaceMeshConnectivity_DestroyObj
   END INTERFACE cmfe_InterfaceMeshConnectivity_Destroy
-  
+
   !>Finishes the creation of an interface points connectivity.
   INTERFACE cmfe_InterfacePointsConnectivity_CreateFinish
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_CreateFinishNumber
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_CreateFinishObj
   END INTERFACE cmfe_InterfacePointsConnectivity_CreateFinish
-  
+
   !>Starts the creation of an interface points connectivity.
   INTERFACE cmfe_InterfacePointsConnectivity_CreateStart
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_CreateStartNumber
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_CreateStartObj
   END INTERFACE cmfe_InterfacePointsConnectivity_CreateStart
-  
+
   !>Destroys an interface points connectivity.
   INTERFACE cmfe_InterfacePointsConnectivity_Destroy
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_DestroyNumber
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_DestroyObj
   END INTERFACE cmfe_InterfacePointsConnectivity_Destroy
-  
+
   !>Get the coupled mesh element number that defines points connectivity
   INTERFACE cmfe_InterfacePointsConnectivity_ElementNumberGet
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_ElementNumberGetNumber
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_ElementNumberGetObj
   END INTERFACE cmfe_InterfacePointsConnectivity_ElementNumberGet
-  
+
   !>Gets the element xi values for the points connectivity between a data point in the interface mesh and an element in a region mesh
   INTERFACE cmfe_InterfacePointsConnectivity_PointXiGet
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_PointXiGetNumber
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_PointXiGetObj
   END INTERFACE cmfe_InterfacePointsConnectivity_PointXiGet
-  
+
   !>Sets the coupled mesh element number that defines points connectivity
   INTERFACE cmfe_InterfacePointsConnectivity_ElementNumberSet
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_ElementNumberSetNumber
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_ElementNumberSetObj
   END INTERFACE cmfe_InterfacePointsConnectivity_ElementNumberSet
-  
+
   !>Sets the element xi values for the points connectivity between a data point in the interface mesh and an element in a region mesh
   INTERFACE cmfe_InterfacePointsConnectivity_PointXiSet
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_PointXiSetNumber
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_PointXiSetObj
   END INTERFACE cmfe_InterfacePointsConnectivity_PointXiSet
-  
+
   !>Update points connectivity information with projection results
   INTERFACE cmfe_InterfacePointsConnectivity_UpdateFromProjection
     MODULE PROCEDURE cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber
@@ -4483,7 +4491,7 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Interface_MeshAdd
 
   PUBLIC cmfe_Interface_CreateFinish,cmfe_Interface_CreateStart
-  
+
   PUBLIC cmfe_Interface_CoordinateSystemSet,cmfe_Interface_CoordinateSystemGet
 
   PUBLIC cmfe_Interface_Destroy
@@ -4503,11 +4511,11 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_InterfacePointsConnectivity_CreateFinish,cmfe_InterfacePointsConnectivity_CreateStart
 
   PUBLIC cmfe_InterfacePointsConnectivity_Destroy
-  
+
   PUBLIC cmfe_InterfacePointsConnectivity_ElementNumberGet,cmfe_InterfacePointsConnectivity_PointXiGet
-  
+
   PUBLIC cmfe_InterfacePointsConnectivity_ElementNumberSet,cmfe_InterfacePointsConnectivity_PointXiSet
-  
+
   PUBLIC cmfe_InterfacePointsConnectivity_UpdateFromProjection
 
 !!==================================================================================================================================
@@ -4603,13 +4611,13 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_InterfaceCondition_EquationsDestroyNumber
     MODULE PROCEDURE cmfe_InterfaceCondition_EquationsDestroyObj
   END INTERFACE cmfe_InterfaceCondition_EquationsDestroy
-  
+
   !>Returns the integration type for an interface condition.
   INTERFACE cmfe_InterfaceCondition_IntegrationTypeGet
     MODULE PROCEDURE cmfe_InterfaceCondition_IntegrationTypeGetNumber
     MODULE PROCEDURE cmfe_InterfaceCondition_IntegrationTypeGetObj
   END INTERFACE cmfe_InterfaceCondition_IntegrationTypeGet
-  
+
   !>Sets/changes the integration type for an interface condition.
   INTERFACE cmfe_InterfaceCondition_IntegrationTypeSet
     MODULE PROCEDURE cmfe_InterfaceCondition_IntegrationTypeSetNumber
@@ -4694,7 +4702,7 @@ MODULE OpenCMISS_Iron
   PUBLIC CMFE_INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR,CMFE_INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR, &
     & CMFE_INTERFACE_CONDITION_FLS_CONTACT_OPERATOR,CMFE_INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR, &
     & CMFE_INTERFACE_CONDITION_SOLID_FLUID_OPERATOR,CMFE_INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR
-    
+
   PUBLIC CMFE_INTERFACE_CONDITION_GAUSS_INTEGRATION,CMFE_INTERFACE_CONDITION_DATA_POINTS_INTEGRATION
 
   PUBLIC cmfe_InterfaceCondition_CreateFinish,cmfe_InterfaceCondition_CreateStart
@@ -4706,7 +4714,7 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_InterfaceCondition_EquationsCreateFinish,cmfe_InterfaceCondition_EquationsCreateStart
 
   PUBLIC cmfe_InterfaceCondition_EquationsDestroy
-  
+
   PUBLIC cmfe_InterfaceCondition_IntegrationTypeGet,cmfe_InterfaceCondition_IntegrationTypeSet
 
   PUBLIC cmfe_InterfaceCondition_LagrangeFieldCreateFinish,cmfe_InterfaceCondition_LagrangeFieldCreateStart
@@ -4908,7 +4916,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Mesh_SurroundingElementsCalculateSetNumber
     MODULE PROCEDURE cmfe_Mesh_SurroundingElementsCalculateSetObj
   END INTERFACE cmfe_Mesh_SurroundingElementsCalculateSet
-  
+
   !>Sets/changes whether data points topology should be calculated for the decomposition.
   INTERFACE cmfe_Mesh_TopologyDataPointsCalculateProjection
     MODULE PROCEDURE cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber
@@ -5109,7 +5117,7 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_MeshElements_UserNumberGet,cmfe_MeshElements_UserNumberSet
 
   PUBLIC cmfe_MeshElements_UserNumbersAllSet
- 
+
   PUBLIC cmfe_MeshNodes_NumberOfDerivativesGet,cmfe_MeshNodes_DerivativesGet
 
   PUBLIC cmfe_MeshNodes_NumberOfVersionsGet
@@ -5299,7 +5307,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Nodes_UserNumberSetNumber
     MODULE PROCEDURE cmfe_Nodes_UserNumberSetObj
   END INTERFACE cmfe_Nodes_UserNumberSet
-  
+
   !>Sets/changes the all user number for nodes.
   INTERFACE cmfe_Nodes_UserNumbersAllSet
     MODULE PROCEDURE cmfe_Nodes_UserNumbersAllSetNumber
@@ -5419,7 +5427,7 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GENERALISED_LAPLACE_SUBTYPE = PROBLEM_GENERALISED_LAPLACE_SUBTYPE !<Generalised Laplace problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_POISEUILLE_SUBTYPE = PROBLEM_STATIC_POISEUILLE_SUBTYPE !<Static Poiseuille problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE = PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE !<Static Poiseuille problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Linear source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS 
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Linear source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE = PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE = PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE = PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
@@ -5497,13 +5505,13 @@ MODULE OpenCMISS_Iron
     & PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE !<Standard elasticity fluid pressure problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE = &
     & PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE = &
     & PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE = &
     & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE !<Transient monodomain simple elasticity problem subtype with titin \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE = &
     & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype with force-velocity relation \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE = & 
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE = &
     & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE !<Transient monodomain active strain elasticity problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE = &
     & PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity Navier Stokes moving mesh subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
@@ -5524,7 +5532,7 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE=PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments and reproject at Newton iterations \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE=PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_REPROJECT_SUBTYPE=PROBLEM_LE_CONTACT_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, reproject at Newton iterations \see OPENCMISS_ProblemSubtypes,OPENCMISS
-    
+
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE=PROBLEM_FE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments and reproject at Newton iterations \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_TRANSFORM_SUBTYPE=PROBLEM_FE_CONTACT_TRANSFORM_SUBTYPE !<finear elasticity problem subject to contact constraint, transform field at load increments \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE=PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE !<finear elasticity problem subject to contact constraint, reproject at Newton iterations \see OPENCMISS_ProblemSubtypes,OPENCMISS
@@ -5556,7 +5564,7 @@ MODULE OpenCMISS_Iron
   PUBLIC CMFE_PROBLEM_NO_TYPE
 
   PUBLIC CMFE_PROBLEM_LINEAR_ELASTICITY_TYPE,CMFE_PROBLEM_FINITE_ELASTICITY_TYPE
-  
+
   PUBLIC CMFE_PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE, CMFE_PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE
 
   PUBLIC CMFE_PROBLEM_STOKES_EQUATION_TYPE,CMFE_PROBLEM_NAVIER_STOKES_EQUATION_TYPE,CMFE_PROBLEM_DARCY_EQUATION_TYPE, &
@@ -5581,10 +5589,10 @@ MODULE OpenCMISS_Iron
     & CMFE_PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE
 
   PUBLIC CMFE_PROBLEM_NO_SUBTYPE
-  
+
   PUBLIC CMFE_PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE, CMFE_PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE, &
     & CMFE_PROBLEM_LE_CONTACT_REPROJECT_SUBTYPE
-    
+
   PUBLIC CMFE_PROBLEM_FE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE, CMFE_PROBLEM_FE_CONTACT_TRANSFORM_SUBTYPE, &
     & CMFE_PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE
 
@@ -5661,7 +5669,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,CMFE_PROBLEM_FINITE_ELASTICITY_CELLML_SUBTYPE, &
     & CMFE_PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE,CMFE_PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE
-  
+
 !!==================================================================================================================================
 !!
 !! PROBLEM_ROUTINES
@@ -5815,7 +5823,7 @@ MODULE OpenCMISS_Iron
   INTERFACE cmfe_Problem_SpecificationSizeGet
     MODULE PROCEDURE cmfe_Problem_SpecificationSizeGetNumber
     MODULE PROCEDURE cmfe_Problem_SpecificationSizeGetObj
-  END INTERFACE cmfe_Problem_SpecificationSizeGet 
+  END INTERFACE cmfe_Problem_SpecificationSizeGet
 
   PUBLIC cmfe_Problem_CellMLEquationsCreateFinish,cmfe_Problem_CellMLEquationsCreateStart
 
@@ -6089,8 +6097,8 @@ MODULE OpenCMISS_Iron
   !> \see OPENCMISS::Solver::Constants,OPENCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT = SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT !<Newton solver Petsc default convergence test type. \see OPENCMISS_NewtonConvergenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM = SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM !<Newton solver energy norm convergence test type. \see OPENCMISS_NewtonConvergenceTypes,OPENCMISS 
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO = SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO !<Newton solver Sum of differentiated ratios of unconstrained to constrained residuals convergence test type. \see OPENCMISS_NewtonConvergenceTypes,OPENCMISS 
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM = SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM !<Newton solver energy norm convergence test type. \see OPENCMISS_NewtonConvergenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO = SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO !<Newton solver Sum of differentiated ratios of unconstrained to constrained residuals convergence test type. \see OPENCMISS_NewtonConvergenceTypes,OPENCMISS
   !>@}
   !> \addtogroup OPENCMISS_DynamicOrderTypes OPENCMISS::Solver::DynamicOrderTypes
   !> \brief The order types for a dynamic solver.
@@ -6316,25 +6324,25 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Solver_DynamicTimesSetNumber1
     MODULE PROCEDURE cmfe_Solver_DynamicTimesSetObj
   END INTERFACE cmfe_Solver_DynamicTimesSet
-  
+
   !Sets the arbitrary path logical for the transformation
   INTERFACE cmfe_Solver_GeometricTransformationArbitraryPathSet
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationArbitraryPathSetNumber
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationArbitraryPathSetObj
   END INTERFACE cmfe_Solver_GeometricTransformationArbitraryPathSet
-  
+
   !Clear transformation for a geometric transformation solver
   INTERFACE cmfe_Solver_GeometricTransformationClear
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationClearNumber
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationClearObj
   END INTERFACE cmfe_Solver_GeometricTransformationClear
-  
+
   !Sets the field to transform
   INTERFACE cmfe_Solver_GeometricTransformationFieldSet
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationFieldSetNumber
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationFieldSetObj
   END INTERFACE cmfe_Solver_GeometricTransformationFieldSet
-  
+
   !Sets the full transformation matrix for a geometric transformation
   INTERFACE cmfe_Solver_GeometricTransformationMatrixSet
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationMatrixSetNumber0
@@ -6342,13 +6350,13 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationMatrixSetNumber1
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationMatrixSetObj1
   END INTERFACE cmfe_Solver_GeometricTransformationMatrixSet
-  
+
   !Sets number of load increments for the transformation
   INTERFACE cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSet
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationNoLoadIncrementsSetObj
   END INTERFACE cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSet
-  
+
   !Sets the rotation for a geometric transformation
   INTERFACE cmfe_Solver_GeometricTransformationRotationSet
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationRotationSetNumber0
@@ -6356,13 +6364,13 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationRotationSetNumber1
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationRotationSetObj1
   END INTERFACE cmfe_Solver_GeometricTransformationRotationSet
-  
+
   !Sets the scalings for a uni-directional geometric transformation
   INTERFACE cmfe_Solver_GeometricTransformationScalingsSet
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationScalingsSetNumber
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationScalingsSetObj
   END INTERFACE cmfe_Solver_GeometricTransformationScalingsSet
-  
+
   !Sets the translation for a geometric transformation
   INTERFACE cmfe_Solver_GeometricTransformationTranslationSet
     MODULE PROCEDURE cmfe_Solver_GeometricTransformationTranslationSetNumber0
@@ -6794,6 +6802,14 @@ MODULE OpenCMISS_Iron
     & CMFE_SOLVER_EIGENPROBLEM_TYPE, &
     & CMFE_SOLVER_OPTIMISER_TYPE
 
+  PUBLIC cmfe_CoupledDecomposition_AddCoupledMesh, cmfe_CoupledDecomposition_AddInterface,  &
+    & cmfe_Decomposition_AssignDecompositionField, cmfe_CoupledDecomposition_CreateFinish, &
+    & cmfe_Decomposition_DecompositionTpwgtSet, cmfe_Decomposition_DecompositionUBVECSet, &
+    & cmfe_Decomposition_NumberOfConstraintsSet, cmfe_Decomposition_NOdeBasedDecompositionSet, &
+    & cmfe_Decomposition_NodeWeightSet, cmfe_CoupledDecomposition_NullifyGeometry, &
+    & cmfe_CoupledDecomposition_NullifyRegion, cmfe_CoupledDecomposition_NullifyInterface, &
+    & cmfe_CoupledDecomposition_Update, cmfe_CoupledDecomposition_UpdateInterface
+
   PUBLIC CMFE_SOLVER_CMISS_LIBRARY,CMFE_SOLVER_PETSC_LIBRARY,CMFE_SOLVER_MUMPS_LIBRARY,CMFE_SOLVER_SUPERLU_LIBRARY, &
     & CMFE_SOLVER_SPOOLES_LIBRARY,CMFE_SOLVER_UMFPACK_LIBRARY,CMFE_SOLVER_LUSOL_LIBRARY,CMFE_SOLVER_ESSL_LIBRARY, &
     & CMFE_SOLVER_LAPACK_LIBRARY,CMFE_SOLVER_TAO_LIBRARY,CMFE_SOLVER_HYPRE_LIBRARY,CMFE_SOLVER_PASTIX_LIBRARY
@@ -6812,7 +6828,7 @@ MODULE OpenCMISS_Iron
     & CMFE_SOLVER_ITERATIVE_ADDITIVE_SCHWARZ_PRECONDITIONER
 
   PUBLIC CMFE_SOLVER_NONLINEAR_NEWTON,CMFE_SOLVER_NONLINEAR_BFGS_INVERSE,CMFE_SOLVER_NONLINEAR_SQP
-  
+
   PUBLIC CMFE_SOLVER_NONLINEAR_QUASI_NEWTON
 
   PUBLIC CMFE_SOLVER_QUASI_NEWTON_LINESEARCH,CMFE_SOLVER_QUASI_NEWTON_TRUSTREGION
@@ -6827,11 +6843,11 @@ MODULE OpenCMISS_Iron
 
   PUBLIC CMFE_SOLVER_QUASI_NEWTON_SCALE_NONE,CMFE_SOLVER_QUASI_NEWTON_SCALE_SHANNO, &
     & CMFE_SOLVER_QUASI_NEWTON_SCALE_LINESEARCH,CMFE_SOLVER_QUASI_NEWTON_SCALE_JACOBIAN
-  
+
   PUBLIC CMFE_SOLVER_NEWTON_LINESEARCH,CMFE_SOLVER_NEWTON_TRUSTREGION
 
   PUBLIC CMFE_SOLVER_NEWTON_LINESEARCH_LINEAR,CMFE_SOLVER_NEWTON_LINESEARCH_QUADRATIC,CMFE_SOLVER_NEWTON_LINESEARCH_CUBIC
- 
+
   PUBLIC CMFE_SOLVER_NEWTON_JACOBIAN_NOT_CALCULATED,CMFE_SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED, &
     & CMFE_SOLVER_NEWTON_JACOBIAN_FD_CALCULATED
 
@@ -6891,17 +6907,17 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Solver_DynamicThetaSet
 
   PUBLIC cmfe_Solver_DynamicTimesSet
-  
+
   PUBLIC cmfe_Solver_GeometricTransformationArbitraryPathSet,cmfe_Solver_GeometricTransformationClear
-  
+
   PUBLIC cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSet
-  
+
   PUBLIC cmfe_Solver_GeometricTransformationScalingsSet
-  
+
   PUBLIC cmfe_Solver_GeometricTransformationFieldSet
-  
+
   PUBLIC cmfe_Solver_GeometricTransformationMatrixSet
-  
+
   PUBLIC cmfe_Solver_GeometricTransformationRotationSet,cmfe_Solver_GeometricTransformationTranslationSet
 
   PUBLIC cmfe_Solver_LabelGet,cmfe_Solver_LabelSet
@@ -6963,43 +6979,43 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Solver_NewtonTypeSet
 
   PUBLIC cmfe_Solver_QuasiNewtonAbsoluteToleranceSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonJacobianCalculationTypeSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonLinearSolverGet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonCellMLSolverGet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonConvergenceTestTypeSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonLineSearchMaxStepSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonLineSearchStepTolSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonLineSearchTypeSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonMaximumIterationsSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonRelativeToleranceSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonSolutionToleranceSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonTrustRegionDelta0Set
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonTrustRegionToleranceSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonRestartSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonRestartTypeSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonScaleTypeSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonSolveTypeSet
-  
+
   PUBLIC cmfe_Solver_QuasiNewtonTypeSet
 
   PUBLIC cmfe_Solver_NonlinearTypeSet
@@ -7031,7 +7047,7 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_SolverEquations_RhsVectorGet
 
   PUBLIC cmfe_BioelectricsFiniteElasticity_UpdateGeometricField
-  
+
 !!==================================================================================================================================
 !!
 !! FieldML routines
@@ -7272,9 +7288,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: workingRealPrecision !<On return, the working real precision
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
- 
+
     ENTERS("cmfe_WorkingRealPrecisionGet",err,error,*999)
-    
+
 #ifdef SINGLE_REAL_PRECISION
     workingRealPrecision=CMFE_SINGLE_REAL_TYPE
 #else
@@ -8294,56 +8310,56 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_InterfaceEquations_Initialise
-  
+
   !
   !================================================================================================================================
   !
-  
+
   !>Finalise a cmfe_InterfaceMeshConnectivityType object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_Finalise(cmfe_InterfacePointsConnectivity,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_Finalise)
-   
+
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(OUT) :: cmfe_InterfacePointsConnectivity !<The cmfe_InterfacePointsConnectivityType object to initialise.
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
 
     ENTERS("cmfe_InterfacePointsConnectivity_Finalise",err,error,*999)
-    
+
     IF(ASSOCIATED(cmfe_InterfacePointsConnectivity%pointsConnectivity)) &
       & CALL InterfacePointsConnectivity_DESTROY(cmfe_InterfacePointsConnectivity%pointsConnectivity,err,error,*999)
- 
+
     EXITS("cmfe_InterfacePointsConnectivity_Finalise")
     RETURN
 999 ERRORSEXITS("cmfe_InterfacePointsConnectivity_Finalise",err,error)
     CALL cmfe_HandleError(Err,error)
     RETURN
-     
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_Finalise
-  
+
   !
   !================================================================================================================================
   !
-  
+
   !>Initialises a cmfe_InterfaceMeshConnectivityType object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_Initialise(cmfe_InterfacePointsConnectivity,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_Initialise)
-   
+
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(OUT) :: cmfe_InterfacePointsConnectivity !<The cmfe_InterfacePointsConnectivityType object to initialise.
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
 
     ENTERS("cmfe_InterfacePointsConnectivity_Initialise",err,error,*999)
-    
+
     NULLIFY(cmfe_InterfacePointsConnectivity%pointsConnectivity)
- 
+
     EXITS("cmfe_InterfacePointsConnectivity_Initialise")
     RETURN
 999 ERRORSEXITS("cmfe_InterfacePointsConnectivity_Initialise",err,error)
     CALL cmfe_HandleError(Err,error)
     RETURN
-     
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_Initialise
 
   !
@@ -9252,7 +9268,7 @@ CONTAINS
     EXITS("cmfe_AnalyticAnalysis_RelativeErrorGetNodeNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_AnalyticAnalysis_RelativeErrorGetNodeNumber
 
   !
@@ -10182,7 +10198,7 @@ CONTAINS
     EXITS("cmfe_AnalyticAnalysis_IntegralPercentageErrorGetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_AnalyticAnalysis_IntegralPercentageErrorGetObj
 
   !
@@ -10515,7 +10531,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_AnalyticAnalysis_IntegralNIDErrorGetObj
-  
+
 
 !!==================================================================================================================================
 !!
@@ -10560,15 +10576,15 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_DiagnosticsSetOn",err,error,*999)
-    
+
 #ifdef WITH_DIAGNOSTICS
-    
+
     CALL DIAGNOSTICS_SET_ON(diagType,levelList,diagFilename,routineList,err,error,*999)
 
 #else
 
     CALL FlagWarning("Can not turn diagnostics on as WITH_DIAGNOSTICS is set to OFF. Set WITH_DIAGNOSTICS to ON.",err,error,*999)
-    
+
 #endif
 
     EXITS("cmfe_DiagnosticsSetOn")
@@ -10671,13 +10687,13 @@ CONTAINS
     ENTERS("cmfe_TimingSetOn",err,error,*999)
 
 #ifdef WITH_DIAGNOSTICS
-    
+
     CALL TIMING_SET_ON(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*999)
 
 #else
 
     CALL FlagWarning("Can not turn timing on as WITH_DIAGNOSTICS is set to OFF. Set WITH_DIAGNOSTICS to ON.",err,error,*999)
-    
+
 #endif
 
     EXITS("cmfe_TimingSetOn")
@@ -17004,7 +17020,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Returns the number of sub-control loops for a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_NumberOfSubLoopsGetNumber0(problemUserNumber,controlLoopIdentifier,numberOfSubLoops,err)
     !DLLEXPORT(cmfe_ControlLoop_NumberOfSubLoopsGetNumber0)
@@ -20088,7 +20104,7 @@ CONTAINS
   SUBROUTINE cmfe_DataProjection_CreateStartNumber(dataProjectionUserNumber,dataPointRegionUserNumber,meshUserNumber, &
     & meshRegionUserNumber,err)
     !DLLEXPORT(cmfe_DataProjection_CreateStartNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number.
     INTEGER(INTG), INTENT(IN) :: dataPointRegionUserNumber !<The region user number of the data points to be projected.
@@ -20101,13 +20117,13 @@ CONTAINS
     TYPE(MESH_TYPE), POINTER :: MESH
     TYPE(REGION_TYPE), POINTER :: DATA_POINTS_REGION
     TYPE(REGION_TYPE), POINTER :: MESH_REGION
-    TYPE(VARYING_STRING) :: localError    
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_CreateStartNumber",err,error,*999)
 
     NULLIFY(DATA_PROJECTION)
-    NULLIFY(DATA_POINTS) 
-    NULLIFY(MESH)   
+    NULLIFY(DATA_POINTS)
+    NULLIFY(MESH)
     NULLIFY(DATA_POINTS_REGION)
     NULLIFY(MESH_REGION)
     CALL REGION_USER_NUMBER_FIND(dataPointRegionUserNumber,DATA_POINTS_REGION,err,error,*999)
@@ -20140,7 +20156,7 @@ CONTAINS
 999 ERRORSEXITS("cmfe_DataProjection_CreateStartNumber",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_DataProjection_CreateStartNumber
 
   !
@@ -20240,7 +20256,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_DestroyObj
-  
+
   !
   !================================================================================================================================
   !
@@ -20251,24 +20267,24 @@ CONTAINS
     !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection and field
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables  
+    !Local variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
     TYPE(DATA_POINTS_TYPE), POINTER :: dataPoints
     TYPE(FIELD_TYPE), POINTER :: field
     TYPE(REGION_TYPE), POINTER :: region
     INTEGER(INTG) :: dataProjectionGlobalNumber !<The data projection global number.
-    TYPE(VARYING_STRING) :: localError      
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber",err,error,*999)
-    
+
     NULLIFY(dataProjection)
-    NULLIFY(dataPoints) 
-    NULLIFY(field)   
+    NULLIFY(dataPoints)
+    NULLIFY(field)
     NULLIFY(region)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
@@ -20309,28 +20325,28 @@ CONTAINS
     !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
-    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables  
+    !Local variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
     TYPE(DATA_POINTS_TYPE), POINTER :: dataPoints
     TYPE(FIELD_TYPE), POINTER :: field
     TYPE(REGION_TYPE), POINTER :: parentRegion
     TYPE(INTERFACE_TYPE), POINTER :: interface
     INTEGER(INTG) :: dataProjectionGlobalNumber !<The data projection global number.
-    TYPE(VARYING_STRING) :: localError      
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber",err,error,*999)
-    
+
     NULLIFY(dataProjection)
-    NULLIFY(dataPoints) 
-    NULLIFY(field)   
+    NULLIFY(dataPoints)
+    NULLIFY(field)
     NULLIFY(parentRegion)
-    NULLIFY(interface)  
+    NULLIFY(interface)
     CALL REGION_USER_NUMBER_FIND(parentRegionUserNumber,parentRegion,err,error,*999)
     IF(ASSOCIATED(parentRegion)) THEN
       CALL INTERFACE_USER_NUMBER_FIND(interfaceUserNumber,parentRegion,interface,err,error,*999)
@@ -20357,7 +20373,7 @@ CONTAINS
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    
+
     EXITS("cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber")
     RETURN
 999 ERRORS("cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber",err,error)
@@ -20366,7 +20382,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -20380,12 +20396,12 @@ CONTAINS
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to interpolate
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables 
+    !Local variables
 
     ENTERS("cmfe_DataProjection_DataPointsPositionEvaluateObj",err,error,*999)
-    
+
     CALL DataProjection_DataPointsPositionEvaluate(dataProjection%dataProjection,field%field,fieldVariableType,err,error,*999)
-    
+
     EXITS("cmfe_DataProjection_DataPointsPositionEvaluateObj")
     RETURN
 999 ERRORS("cmfe_DataProjection_DataPointsPositionEvaluateObj",err,error)
@@ -20394,7 +20410,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateObj
-  
+
   !
   !================================================================================================================================
   !
@@ -20405,22 +20421,22 @@ CONTAINS
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidatesSetRegionNumber)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection and field
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<The candidate element for the projection
     INTEGER(INTG), INTENT(IN) :: localFaceLineNumbers(:) !<The local face/line number for the candidate elements
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables  
+    !Local variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
     TYPE(DATA_POINTS_TYPE), POINTER :: dataPoints
     TYPE(REGION_TYPE), POINTER :: region
     INTEGER(INTG) :: dataProjectionGlobalNumber !<The data projection global number.
-    TYPE(VARYING_STRING) :: localError      
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ProjectionCandidatesSetRegionNumber",err,error,*999)
-    
+
     NULLIFY(dataProjection)
-    NULLIFY(dataPoints) 
+    NULLIFY(dataPoints)
     NULLIFY(region)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
@@ -20454,26 +20470,26 @@ CONTAINS
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
-    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<The candidate element for the projection
     INTEGER(INTG), INTENT(IN) :: localFaceLineNumbers(:) !<The local face/line number for the candidate elements
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables  
+    !Local variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
     TYPE(DATA_POINTS_TYPE), POINTER :: dataPoints
     TYPE(REGION_TYPE), POINTER :: parentRegion
     TYPE(INTERFACE_TYPE), POINTER :: interface
     INTEGER(INTG) :: dataProjectionGlobalNumber !<The data projection global number.
-    TYPE(VARYING_STRING) :: localError      
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber",err,error,*999)
-    
+
     NULLIFY(dataProjection)
-    NULLIFY(dataPoints)  
+    NULLIFY(dataPoints)
     NULLIFY(parentRegion)
-    NULLIFY(interface)  
+    NULLIFY(interface)
     CALL REGION_USER_NUMBER_FIND(parentRegionUserNumber,parentRegion,err,error,*999)
     IF(ASSOCIATED(parentRegion)) THEN
       CALL INTERFACE_USER_NUMBER_FIND(interfaceUserNumber,parentRegion,interface,err,error,*999)
@@ -20493,7 +20509,7 @@ CONTAINS
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    
+
     EXITS("cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber")
     RETURN
 999 ERRORS("cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber",err,error)
@@ -20502,7 +20518,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -20516,13 +20532,13 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<The candidate element for the projection
     INTEGER(INTG), INTENT(IN) :: localFaceLineNumbers(:) !<The local face/line number for the candidate elements
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables 
+    !Local variables
 
     ENTERS("cmfe_DataProjection_ProjectionCandidatesSetObj",err,error,*999)
-    
+
     CALL DataProjection_ProjectionCandidatesSet(dataProjection%dataProjection,candidateElements,localFaceLineNumbers, &
       & err,error,*999)
-    
+
     EXITS("cmfe_DataProjection_ProjectionCandidatesSetObj")
     RETURN
 999 ERRORS("cmfe_DataProjection_ProjectionCandidatesSetObj",err,error)
@@ -20545,22 +20561,22 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The region user number of the data projection to evaluate.
     INTEGER(INTG), INTENT(IN) :: projectionFieldUserNumber !<The field user number of the field data points are be projected on.
-    INTEGER(INTG), INTENT(IN) :: projectionFieldRegionUserNumber !<The region user number of the field data points are be projected on.  
+    INTEGER(INTG), INTENT(IN) :: projectionFieldRegionUserNumber !<The region user number of the field data points are be projected on.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables  
+    !Local variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(FIELD_TYPE), POINTER :: PROJECTION_FIELD
     TYPE(REGION_TYPE), POINTER :: DATA_POINTS_REGION
     TYPE(REGION_TYPE), POINTER :: PROJECTION_FIELD_REGION
     INTEGER(INTG) :: GLOBAL_NUMBER !<The data projection global number.
-    TYPE(VARYING_STRING) :: localError      
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateNumber",err,error,*999)
-    
+
     NULLIFY(DATA_PROJECTION)
-    NULLIFY(DATA_POINTS) 
-    NULLIFY(PROJECTION_FIELD)   
+    NULLIFY(DATA_POINTS)
+    NULLIFY(PROJECTION_FIELD)
     NULLIFY(DATA_POINTS_REGION)
     NULLIFY(PROJECTION_FIELD_REGION)
     CALL REGION_USER_NUMBER_FIND(dataPointsRegionUserNumber,DATA_POINTS_REGION,err,error,*999)
@@ -20839,15 +20855,15 @@ CONTAINS
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
-    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER    
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER
     TYPE(REGION_TYPE), POINTER :: REGION
-    TYPE(VARYING_STRING) :: localError 
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ResultDistanceGetNumber",err,error,*999)
 
     NULLIFY(REGION)
-    NULLIFY(DATA_POINTS)    
-    NULLIFY(DATA_PROJECTION) 
+    NULLIFY(DATA_POINTS)
+    NULLIFY(DATA_PROJECTION)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
     IF(ASSOCIATED(REGION)) THEN
       CALL REGION_DATA_POINTS_GET(REGION,DATA_POINTS,err,error,*999)
@@ -20922,14 +20938,14 @@ CONTAINS
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
-    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER  
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ResultElementNumberGetNumber",err,error,*999)
 
     NULLIFY(REGION)
-    NULLIFY(DATA_POINTS)    
+    NULLIFY(DATA_POINTS)
     NULLIFY(DATA_PROJECTION)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
     IF(ASSOCIATED(REGION)) THEN
@@ -20948,7 +20964,7 @@ CONTAINS
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
-    ENDIF    
+    ENDIF
 
     EXITS("cmfe_DataProjection_ResultElementNumberGetNumber")
     RETURN
@@ -21006,14 +21022,14 @@ CONTAINS
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
-    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER  
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ResultElementFaceNumberGetNumber",err,error,*999)
 
     NULLIFY(REGION)
-    NULLIFY(DATA_POINTS)    
+    NULLIFY(DATA_POINTS)
     NULLIFY(DATA_PROJECTION)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
     IF(ASSOCIATED(REGION)) THEN
@@ -21033,7 +21049,7 @@ CONTAINS
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
-    ENDIF    
+    ENDIF
 
     EXITS("cmfe_DataProjection_ResultElementFaceNumberGetNumber")
     RETURN
@@ -21092,14 +21108,14 @@ CONTAINS
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
-    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER  
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ResultElementLineNumberGetNumber",err,error,*999)
 
     NULLIFY(REGION)
-    NULLIFY(DATA_POINTS)    
+    NULLIFY(DATA_POINTS)
     NULLIFY(DATA_PROJECTION)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
     IF(ASSOCIATED(REGION)) THEN
@@ -21119,7 +21135,7 @@ CONTAINS
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
-    ENDIF    
+    ENDIF
 
     EXITS("cmfe_DataProjection_ResultElementLineNumberGetNumber")
     RETURN
@@ -21178,14 +21194,14 @@ CONTAINS
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
-    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER  
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ResultExitTagGetNumber",err,error,*999)
 
     NULLIFY(REGION)
-    NULLIFY(DATA_POINTS)    
+    NULLIFY(DATA_POINTS)
     NULLIFY(DATA_PROJECTION)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
     IF(ASSOCIATED(REGION)) THEN
@@ -21204,7 +21220,7 @@ CONTAINS
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
-    ENDIF    
+    ENDIF
 
     EXITS("cmfe_DataProjection_ResultExitTagGetNumber")
     RETURN
@@ -21259,14 +21275,14 @@ CONTAINS
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
-    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER  
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ResultXiGetNumber",err,error,*999)
 
     NULLIFY(REGION)
-    NULLIFY(DATA_POINTS)    
+    NULLIFY(DATA_POINTS)
     NULLIFY(DATA_PROJECTION)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
     IF(ASSOCIATED(REGION)) THEN
@@ -21305,7 +21321,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.        
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
     REAL(DP), INTENT(OUT) :: ProjectionXi(:) !<On return, the projection xi for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -21339,14 +21355,14 @@ CONTAINS
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
-    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER  
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ResultXiSetNumber",err,error,*999)
 
     NULLIFY(REGION)
-    NULLIFY(DATA_POINTS)    
+    NULLIFY(DATA_POINTS)
     NULLIFY(DATA_PROJECTION)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
     IF(ASSOCIATED(REGION)) THEN
@@ -21385,7 +21401,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to set attributes for.
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to set attributes for 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to set attributes for
     REAL(DP), INTENT(IN) :: ProjectionXi(:) !<On return, the projection xi for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -21420,14 +21436,14 @@ CONTAINS
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
-    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER  
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataProjection_ResultProjectionVectorGetNumber",err,error,*999)
 
     NULLIFY(REGION)
-    NULLIFY(DATA_POINTS)    
+    NULLIFY(DATA_POINTS)
     NULLIFY(DATA_PROJECTION)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
     IF(ASSOCIATED(REGION)) THEN
@@ -21467,7 +21483,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
-    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.        
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
     REAL(DP), INTENT(OUT) :: projectionVector(:) !<On return, the projection vector for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -22163,7 +22179,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_StartingXiSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -22221,7 +22237,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_ElementSetInterfaceNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -22267,7 +22283,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_ElementSetRegionNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -22628,7 +22644,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_LabelSetVSInterfaceNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -23784,7 +23800,7 @@ CONTAINS
     EXITS("cmfe_EquationsSet_DerivedVariableCalculateNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateNumber
 
   !
@@ -23809,7 +23825,7 @@ CONTAINS
 999 ERRORS("cmfe_EquationsSet_DerivedVariableCalculateObj",err,error)
     EXITS("cmfe_EquationsSet_DerivedVariableCalculateObj")
     CALL cmfe_HandleError(err,error)
-    
+
   END SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateObj
 
   !
@@ -23855,7 +23871,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("cmfe_EquationsSet_DerivedVariableSetNumber",err,error)
     CALL cmfe_HandleError(err,error)
-    
+
   END SUBROUTINE cmfe_EquationsSet_DerivedVariableSetNumber
 
   !
@@ -23880,7 +23896,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("cmfe_EquationsSet_DerivedVariableSetObj",err,error)
     CALL cmfe_HandleError(err,error)
-    
+
   END SUBROUTINE cmfe_EquationsSet_DerivedVariableSetObj
 
   !
@@ -26258,7 +26274,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to get the specification size for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the specification size for.
-    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the equations set specification array. 
+    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the equations set specification array.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
@@ -26303,7 +26319,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to get the specification size for.
-    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the equations set specification array. 
+    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the equations set specification array.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -31739,7 +31755,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetGetConstantLObj
-  
+
   !
   !================================================================================================================================
   !
@@ -31802,7 +31818,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetGetDataPointIntgNumberI
-  
+
   !
   !================================================================================================================================
   !
@@ -31886,7 +31902,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetGetDataPointIntgObj
-  
+
   !
   !================================================================================================================================
   !
@@ -31949,7 +31965,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetGetDataPointSPNumberI
-  
+
   !
   !================================================================================================================================
   !
@@ -32032,7 +32048,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetGetDataPointSPObj
-  
+
   !
   !================================================================================================================================
   !
@@ -32095,7 +32111,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetGetDataPointDPNumberI
-  
+
   !
   !================================================================================================================================
   !
@@ -32178,7 +32194,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetGetDataPointDPObj
-  
+
   !
   !================================================================================================================================
   !
@@ -32240,7 +32256,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetGetDataPointLNumberI
-  
+
   !
   !================================================================================================================================
   !
@@ -33344,7 +33360,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateConstantLObj
-  
+
   !
   !================================================================================================================================
   !
@@ -33407,7 +33423,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointIntgNumberI
-  
+
   !
   !================================================================================================================================
   !
@@ -33492,7 +33508,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointIntgObj
-  
+
   !
   !================================================================================================================================
   !
@@ -33555,7 +33571,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointSPNumberI
-  
+
   !
   !================================================================================================================================
   !
@@ -33639,7 +33655,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointSPObj
-  
+
   !
   !================================================================================================================================
   !
@@ -33702,7 +33718,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointDPNumberI
-  
+
   !
   !================================================================================================================================
   !
@@ -33786,7 +33802,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointDPObj
-  
+
   !
   !================================================================================================================================
   !
@@ -33849,7 +33865,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointLNumberI
-  
+
   !
   !================================================================================================================================
   !
@@ -38406,20 +38422,20 @@ CONTAINS
 999 ERRORSEXITS("cmfe_Interface_CreateStartObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_Interface_CreateStartObj
-  
-  !  
+
+  !
   !================================================================================================================================
-  !  
- 
+  !
+
   !>Sets/changes the coordinate system for an interface identified by an user number.
   SUBROUTINE cmfe_Interface_CoordinateSystemSetNumber(parentRegionUserNumber,interfaceUserNumber,coordinateSystemUserNumber,err)
     !DLLEXPORT(cmfe_Interface_CoordinateSystemSetNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region where interface was created.
-    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to set the coordinate system for.    
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to set the coordinate system for.
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set.
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
@@ -38427,15 +38443,15 @@ CONTAINS
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_Interface_CoordinateSystemSetNumber",err,error,*999)
- 
+
     NULLIFY(INTERFACE)
     NULLIFY(REGION)
     NULLIFY(COORDINATE_SYSTEM)
     CALL REGION_USER_NUMBER_FIND(parentRegionUserNumber,REGION,err,error,*999)
     CALL INTERFACE_USER_NUMBER_FIND(interfaceUserNumber,REGION,INTERFACE,err,error,*999)
-    
+
     IF(ASSOCIATED(INTERFACE)) THEN
       CALL COORDINATE_SYSTEM_USER_NUMBER_FIND(coordinateSystemUserNumber,COORDINATE_SYSTEM,err,error,*999)
       IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
@@ -38456,25 +38472,25 @@ CONTAINS
 999 ERRORSEXITS("cmfe_Interface_CoordinateSystemSetNumber",err,error)
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_Interface_CoordinateSystemSetNumber
 
-  !  
+  !
   !================================================================================================================================
-  !  
- 
+  !
+
   !>Sets/changes the coordinate system for an interface identified by an object.
   SUBROUTINE cmfe_Interface_CoordinateSystemSetObj(interface,coordinateSystem,err)
     !DLLEXPORT(cmfe_Interface_CoordinateSystemSetObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to set the coordinate system for
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to set.
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_Interface_CoordinateSystemSetObj",err,error,*999)
- 
+
     CALL INTERFACE_COORDINATE_SYSTEM_SET(interface%interface,coordinateSystem%coordinateSystem,err,error,*999)
 
     EXITS("cmfe_Interface_CoordinateSystemSetObj")
@@ -38486,15 +38502,15 @@ CONTAINS
 
   !
   !================================================================================================================================
-  !   
-  
+  !
+
   !>Returns the coordinate system for an interface identified by an user number.
   SUBROUTINE cmfe_Interface_CoordinateSystemGetNumber(parentRegionUserNumber,interfaceUserNumber,coordinateSystemUserNumber,err)
     !DLLEXPORT(cmfe_Interface_CoordinateSystemGetNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the region to get the coordinate system for.
-    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to get the coordinate system for. 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to get the coordinate system for.
     INTEGER(INTG), INTENT(OUT) :: coordinateSystemUserNumber !<On return, the coordinate system user number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -38502,9 +38518,9 @@ CONTAINS
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_Interface_CoordinateSystemGetNumber",err,error,*999)
- 
+
     NULLIFY(REGION)
     NULLIFY(INTERFACE)
     NULLIFY(COORDINATE_SYSTEM)
@@ -38530,25 +38546,25 @@ CONTAINS
 999 ERRORSEXITS("cmfe_Interface_CoordinateSystemGetNumber",err,error)
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_Interface_CoordinateSystemGetNumber
 
-  !  
+  !
   !================================================================================================================================
-  !  
- 
-  !>Returns the coordinate system for an interface identified by an object. 
+  !
+
+  !>Returns the coordinate system for an interface identified by an object.
   SUBROUTINE cmfe_Interface_CoordinateSystemGetObj(Interface,CoordinateSystem,err)
     !DLLEXPORT(cmfe_Interface_CoordinateSystemGetObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: Interface !<The interface to get the coordinate system for.
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: CoordinateSystem !<On return, the interface coordinate system.
    INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_Interface_CoordinateSystemGetObj",err,error,*999)
- 
+
     CALL INTERFACE_COORDINATE_SYSTEM_GET(Interface%interface,CoordinateSystem%coordinateSystem,err,error,*999)
 
     EXITS("cmfe_Interface_CoordinateSystemGetObj")
@@ -38556,10 +38572,10 @@ CONTAINS
 999 ERRORSEXITS("cmfe_Interface_CoordinateSystemGetObj",err,error)
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_Interface_CoordinateSystemGetObj
-  
-  !  
+
+  !
   !================================================================================================================================
   !
 
@@ -39300,7 +39316,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The coupled mesh element to be connected to the interface
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
- 
+
     ENTERS("cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber",err,error,*999)
 
     CALL FlagError("Not implemented yet.",err,error,*999)
@@ -39333,7 +39349,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_InterfaceMeshConnectivity_NodeNumberSetObj",err,error,*999)
-    
+
     IF(SIZE(interfaceNodeNumbers(:))==SIZE(firstCoupledMeshNodeNumbers(:)) &
       & .AND.SIZE(interfaceNodeNumbers(:))==SIZE(secondCoupledMeshNodeNumbers(:))) THEN
       !TODO Check pointers
@@ -39363,7 +39379,7 @@ CONTAINS
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementXiSetNumber(regionUserNumber,interfaceUserNumber,interfaceElementNumber, &
      &  coupledMeshIndexNumber,coupledMeshElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi,err)
     !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementXiSetNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to start the creation of the meshes connectivity.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to start the creation of the meshes connectivity for.
@@ -39474,7 +39490,7 @@ CONTAINS
       CALL INTERFACE_USER_NUMBER_FIND(interfaceUserNumber,REGION,INTERFACE,err,error,*999)
       IF(ASSOCIATED(INTERFACE)) THEN
         CALL BASIS_USER_NUMBER_FIND(interfaceBasisNumber,BASIS,err,error,*999)
-        IF (ASSOCIATED(BASIS)) THEN
+        IF(ASSOCIATED(BASIS)) THEN
           CALL INTERFACE_MESH_CONNECTIVITY_BASIS_SET(interface%MESH_CONNECTIVITY,BASIS,err,error,*999)
         ELSE
           localError="A basis with the user number "//TRIM(NumberToVString(interfaceBasisNumber,"*",err,error))// &
@@ -39605,7 +39621,7 @@ CONTAINS
   !>Finishes the creation of an interface coupled mesh points connectivity identified by a user number.
   SUBROUTINE cmfe_InterfacePointsConnectivity_CreateFinishNumber(regionUserNumber,interfaceUserNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateFinishNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to finish the interface points connectivity for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to finish creating the points connectivity.
@@ -39614,9 +39630,9 @@ CONTAINS
     TYPE(INTERFACE_TYPE), POINTER :: interface
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_CreateFinishNumber",err,error,*999)
- 
+
     NULLIFY(region)
     NULLIFY(interface)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
@@ -39641,24 +39657,24 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_CreateFinishNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_CreateFinishNumber
 
-  !  
+  !
   !================================================================================================================================
-  !  
- 
+  !
+
   !>Finishes the creation of an interface meshes connectivity identified by an object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_CreateFinishObj(interfacePointsConnectivity,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateFinishObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: interfacePointsConnectivity !<The interface points connectivity to finish creating.
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_InterfacePointsConnectivity_CreateFinishObj",err,error,*999)
- 
+
     CALL InterfacePointsConnectivity_CreateFinish(interfacePointsConnectivity%pointsConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfacePointsConnectivity_CreateFinishObj")
@@ -39667,17 +39683,17 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_CreateFinishObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_CreateFinishObj
-  
-  !  
+
+  !
   !================================================================================================================================
-  !   
-  
+  !
+
   !>Starts the creation of an interface points connectivity identified by a user number.
   SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartNumber(regionUserNumber,interfaceUserNumber,MeshNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateStartNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to start the creation of the meshes connectivity.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to start the creation of the meshes connectivity for.
@@ -39689,9 +39705,9 @@ CONTAINS
     TYPE(InterfacePointsConnectivityType), POINTER :: interfacePointsConnectivity
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_CreateStartNumber",err,error,*999)
- 
+
     NULLIFY(region)
     NULLIFY(interface)
     NULLIFY(interfacePointsConnectivity)
@@ -39724,17 +39740,17 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_CreateStartNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartNumber
 
-  !  
+  !
   !================================================================================================================================
-  !  
- 
+  !
+
   !>Starts the creation of an interface points connectivity identified by an object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartObj(interface,interfaceMesh,interfacePointsConnectivity,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateStartObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to start the creation of the meshes connectivity for
     TYPE(cmfe_MeshType), INTENT(IN) :: interfaceMesh
@@ -39753,9 +39769,9 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_CreateStartObj")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartObj
-  
+
   !
   !================================================================================================================================
   !
@@ -39825,19 +39841,19 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_InterfacePointsConnectivity_DestroyObj
-  
-  !  
+
+  !
   !================================================================================================================================
-  ! 
+  !
 
   !>Gets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberGetNumber(regionUserNumber,interfaceUserNumber, &
      &  interfaceDataPointIndexNumber,coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberGetNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
-    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the interface mesh that points connectivity is associated to
@@ -39847,9 +39863,9 @@ CONTAINS
     TYPE(INTERFACE_TYPE), POINTER :: interface
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_ElementNumberGetNumber",err,error,*999)
- 
+
     NULLIFY(region)
     NULLIFY(interface)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
@@ -39875,18 +39891,18 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_ElementNumberGetNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberGetNumber
-  
-  !  
+
+  !
   !================================================================================================================================
-  !   
+  !
 
   !>Gets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberGetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, &
       & coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberGetObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface points connectivity to set the element number for
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
@@ -39895,9 +39911,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: coupledMeshElementNumber !<The element number where the data point is projected to.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_InterfacePointsConnectivity_ElementNumberGetObj",err,error,*999)
- 
+
     CALL InterfacePointsConnectivity_ElementNumberGet(InterfacePointsConnectivity%pointsConnectivity, &
       & interfaceDataPointIndexNumber,coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err,error,*999)
 
@@ -39907,7 +39923,7 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_ElementNumberGetObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberGetObj
 
   !
@@ -39918,10 +39934,10 @@ CONTAINS
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberSetNumber(regionUserNumber,interfaceUserNumber, &
      &  interfaceDataPointIndexNumber,coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberSetNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
-    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
     INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The element number where the data point is projected to.
@@ -39931,9 +39947,9 @@ CONTAINS
     TYPE(INTERFACE_TYPE), POINTER :: interface
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_ElementNumberSetNumber",err,error,*999)
- 
+
     NULLIFY(region)
     NULLIFY(interface)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
@@ -39959,18 +39975,18 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_ElementNumberSetNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberSetNumber
-  
-  !  
+
+  !
   !================================================================================================================================
-  !   
+  !
 
   !>Sets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberSetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, &
       & coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberSetObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface points connectivity to set the element number for
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
@@ -39979,9 +39995,9 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to set the points connectivity element number for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_InterfacePointsConnectivity_ElementNumberSetObj",err,error,*999)
- 
+
     CALL InterfacePointsConnectivity_ElementNumberSet(InterfacePointsConnectivity%pointsConnectivity, &
       & interfaceDataPointIndexNumber,coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err,error,*999)
 
@@ -39991,9 +40007,9 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_ElementNumberSetObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -40002,21 +40018,21 @@ CONTAINS
   SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiGetNumber(regionUserNumber,interfaceUserNumber, &
       & interfaceDataPointIndexNumber,coupledMeshIndexNumber,xi,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_PointXiGetNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
-    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
-    REAL(DP), INTENT(OUT) :: xi(:) !<xi(xiIdx). The full xi location in the coupled mesh that the data point is connected to 
+    REAL(DP), INTENT(OUT) :: xi(:) !<xi(xiIdx). The full xi location in the coupled mesh that the data point is connected to
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: interface
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_PointXiGetNumber",err,error,*999)
- 
+
     NULLIFY(region)
     NULLIFY(interface)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
@@ -40042,28 +40058,28 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_PointXiGetNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiGetNumber
 
   !
   !================================================================================================================================
   !
- 
+
   !>Gets the xi coordinate mapping between the interface data points and xi coordinates in a coupled region mesh
-  SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiGetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, & 
+  SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiGetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, &
      &  coupledMeshIndexNumber,xi,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_PointXiGetObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface to start the creation of the meshes connectivity for
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
-    REAL(DP), INTENT(OUT) :: xi(:) !<xi(xiIdx). The full xi location in the coupled mesh that the data point is connected to 
+    REAL(DP), INTENT(OUT) :: xi(:) !<xi(xiIdx). The full xi location in the coupled mesh that the data point is connected to
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_InterfacePointsConnectivity_PointXiGetObj",err,error,*999)
- 
+
     CALL InterfacePointsConnectivity_PointXiGet(InterfacePointsConnectivity%pointsConnectivity, &
       & interfaceDataPointIndexNumber,coupledMeshIndexNumber,xi,err,error,*999)
 
@@ -40073,7 +40089,7 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_PointXiGetObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiGetObj
 
   !
@@ -40084,21 +40100,21 @@ CONTAINS
   SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiSetNumber(regionUserNumber,interfaceUserNumber, &
       & interfaceDataPointIndexNumber,coupledMeshIndexNumber,xi,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_PointXiSetNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
-    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
-    REAL(DP), INTENT(IN) :: xi(:) !<xi(xiIdx). The full xi location in the coupled mesh that the data point is connected to 
+    REAL(DP), INTENT(IN) :: xi(:) !<xi(xiIdx). The full xi location in the coupled mesh that the data point is connected to
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: interface
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_PointXiSetNumber",err,error,*999)
- 
+
     NULLIFY(region)
     NULLIFY(interface)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
@@ -40124,28 +40140,28 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_PointXiSetNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiSetNumber
 
   !
   !================================================================================================================================
   !
- 
+
   !>Sets the xi coordinate mapping between the interface data points and xi coordinates in a coupled region mesh
-  SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiSetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, & 
+  SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiSetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, &
      &  coupledMeshIndexNumber,xi,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_PointXiSetObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface to start the creation of the meshes connectivity for
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
-    REAL(DP), INTENT(IN) :: xi(:) !<xi(xiIdx). The full xi location in the coupled mesh that the data point is connected to 
+    REAL(DP), INTENT(IN) :: xi(:) !<xi(xiIdx). The full xi location in the coupled mesh that the data point is connected to
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_InterfacePointsConnectivity_PointXiSetObj",err,error,*999)
- 
+
     CALL InterfacePointsConnectivity_PointXiSet(InterfacePointsConnectivity%pointsConnectivity, &
       & interfaceDataPointIndexNumber,coupledMeshIndexNumber,xi,err,error,*999)
 
@@ -40155,21 +40171,21 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_PointXiSetObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiSetObj
-  
-  !  
+
+  !
   !================================================================================================================================
-  !  
+  !
 
   !>Update points connectivity with projection results, data projection identified by region user number
   SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber(regionUserNumber,interfaceUserNumber, &
       & dataPointsRegionUserNumber,dataProjectionUserNumber,coupledMeshIndex,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
-    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface
     INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The region number of the data points which the data projection is associated with
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to update points connectivity with
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndex !<The index number of the coupled mesh
@@ -40181,9 +40197,9 @@ CONTAINS
     TYPE(DATA_POINTS_TYPE), POINTER :: dataPoints
     TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber",err,error,*999)
- 
+
     NULLIFY(ParentRegion)
     NULLIFY(dataPointsRegion)
     NULLIFY(interface)
@@ -40199,7 +40215,7 @@ CONTAINS
           & err,error,*999)
         CALL DATA_POINTS_DATA_PROJECTION_GET(dataPoints,dataProjectionGlobalNumber,dataProjection,err,error,*999)
         CALL InterfacePointsConnectivity_UpdateFromProjection(Interface%PointsConnectivity, &
-          & dataProjection,coupledMeshIndex,err,error,*999) 
+          & dataProjection,coupledMeshIndex,err,error,*999)
       ELSE
         localError="An interface with an user number of "//TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
           & " does not exist on the region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
@@ -40217,21 +40233,21 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber
-  
-  !  
+
+  !
   !================================================================================================================================
-  !  
+  !
 
   !>Update points connectivity with projection results, data projection identified by interface user number
   SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber(regionUserNumber,interfaceUserNumber, &
     & dataPointsRegionUserNumber,dataPointsInterfaceUserNumber,dataProjectionUserNumber,coupledMeshIndex,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
-    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface
     INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The parent region number of the interface for the data points which the data projection is associated with
     INTEGER(INTG), INTENT(IN) :: dataPointsInterfaceUserNumber !<The interface number of the data points which the data projection is associated with
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to update points connectivity with
@@ -40244,9 +40260,9 @@ CONTAINS
     TYPE(DATA_POINTS_TYPE), POINTER :: dataPoints
     TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber",err,error,*999)
- 
+
     NULLIFY(ParentRegion)
     NULLIFY(dataPointsRegion)
     NULLIFY(interface)
@@ -40264,7 +40280,7 @@ CONTAINS
           & err,error,*999)
         CALL DATA_POINTS_DATA_PROJECTION_GET(dataPoints,dataProjectionGlobalNumber,dataProjection,err,error,*999)
         CALL InterfacePointsConnectivity_UpdateFromProjection(Interface%PointsConnectivity, &
-          & dataProjection,coupledMeshIndex,err,error,*999) 
+          & dataProjection,coupledMeshIndex,err,error,*999)
       ELSE
         localError="An interface with an user number of "//TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
           & " does not exist on the region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
@@ -40282,29 +40298,29 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber
-  
-  !  
+
+  !
   !================================================================================================================================
-  !  
+  !
 
   !>Update points connectivity with projection results, data projection identified by object
   SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionObj(pointsConnectivity,dataProjection, &
       & coupledMeshIndex,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_UpdateFromProjectionObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: pointsConnectivity !<A pointer to the interface points connectivity to finish creating
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to update points connectivity with
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndex !<The mesh index of the the points connectivity to be updated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    
+
     ENTERS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionObj",err,error,*999)
- 
+
     CALL InterfacePointsConnectivity_UpdateFromProjection(pointsConnectivity%pointsConnectivity, &
-      & dataProjection%dataProjection,coupledMeshIndex,err,error,*999) 
+      & dataProjection%dataProjection,coupledMeshIndex,err,error,*999)
 
     EXITS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionObj")
     RETURN
@@ -40312,7 +40328,7 @@ CONTAINS
     EXITS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionObj
 
 !!==================================================================================================================================
@@ -40944,7 +40960,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_InterfaceCondition_EquationsDestroyObj
-  
+
   !
   !================================================================================================================================
   !
@@ -41308,7 +41324,7 @@ CONTAINS
   SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateFinishNumber(RegionUserNumber,InterfaceUserNumber, &
     & InterfaceConditionUserNumber,err)
     !DLLEXPORT(cmfe_InterfaceCondition_PenaltyFieldCreateFinishNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: RegionUserNumber !<The user number of the region containing the interface and interface condition to finish the penalty field for.
     INTEGER(INTG), INTENT(IN) :: InterfaceUserNumber !<The user number of the interface containg the interface condition to finish the penalty  field for.
@@ -41319,9 +41335,9 @@ CONTAINS
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfaceCondition_PenaltyFieldCreateFinishNumber",err,error,*999)
- 
+
     NULLIFY(REGION)
     NULLIFY(INTERFACE)
     NULLIFY(INTERFACE_CONDITION)
@@ -41357,24 +41373,24 @@ CONTAINS
     EXITS("cmfe_InterfaceCondition_PenaltyFieldCreateFinishNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateFinishNumber
 
-  !  
+  !
   !================================================================================================================================
-  !  
- 
+  !
+
   !>Finishes the creation of a penalty field for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateFinishObj(InterfaceCondition,err)
     !DLLEXPORT(cmfe_InterfaceCondition_PenaltyFieldCreateFinishObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: InterfaceCondition !<The interface condition to finish creating the penalty field for.
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_InterfaceCondition_PenaltyFieldCreateFinishObj",err,error,*999)
- 
+
     CALL InterfaceCondition_PenaltyFieldCreateFinish(InterfaceCondition%interfaceCondition,err,error,*999)
 
     EXITS("cmfe_InterfaceCondition_PenaltyFieldCreateFinishObj")
@@ -41383,18 +41399,18 @@ CONTAINS
     EXITS("cmfe_InterfaceCondition_PenaltyFieldCreateFinishObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateFinishObj
 
-  !  
+  !
   !================================================================================================================================
-  !  
- 
+  !
+
   !>Starts the creation of a penalty field for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateStartNumber(RegionUserNumber,InterfaceUserNumber, &
     & InterfaceConditionUserNumber,PenaltyFieldUserNumber,err)
     !DLLEXPORT(cmfe_InterfaceCondition_PenaltyFieldCreateStartNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: RegionUserNumber !<The user number of the region containing the interface and interface condition to start the creation of the penalty field for.
     INTEGER(INTG), INTENT(IN) :: InterfaceUserNumber !<The user number of the interface containing the interface condition to start the creation of the penalty field for.
@@ -41407,9 +41423,9 @@ CONTAINS
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_InterfaceCondition_PenaltyFieldCreateStartNumber",err,error,*999)
- 
+
     NULLIFY(REGION)
     NULLIFY(INTERFACE)
     NULLIFY(INTERFACE_CONDITION)
@@ -41447,26 +41463,26 @@ CONTAINS
     EXITS("cmfe_InterfaceCondition_PenaltyFieldCreateStartNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateStartNumber
 
-  !  
+  !
   !================================================================================================================================
-  !  
- 
+  !
+
   !>Starts the creation of a penalty field for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateStartObj(InterfaceCondition,PenaltyFieldUserNumber,PenaltyField,err)
     !DLLEXPORT(cmfe_InterfaceCondition_PenaltyFieldCreateStartObj)
-  
+
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: InterfaceCondition !<The interface condition to start the creation of the penalty field for.
     INTEGER(INTG), INTENT(IN) :: PenaltyFieldUserNumber !<The user number of the penalty field.
     TYPE(cmfe_FieldType), INTENT(INOUT) :: PenaltyField !<If associated on entry, the user created penalty field which has the same user number as the specified penalty field user number. If not associated on entry, on return, the created penalty field for the interface condition.
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_InterfaceCondition_PenaltyFieldCreateStartObj",err,error,*999)
- 
+
     CALL InterfaceCondition_PenaltyFieldCreateStart(InterfaceCondition%interfaceCondition,PenaltyFieldUserNumber, &
       & PenaltyField%field,err,error,*999)
 
@@ -41476,12 +41492,12 @@ CONTAINS
     EXITS("cmfe_InterfaceCondition_PenaltyFieldCreateStartObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateStartObj
 
-  !  
+  !
   !================================================================================================================================
-  !   
+  !
 
   !>Returns the method for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_MethodGetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
@@ -44176,16 +44192,16 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Mesh_NumberOfElementsSetObj
-  
+
   !
   !================================================================================================================================
   !
-  
+
   !>Calculate mesh data points topology in a region identified by a user number based on projection
   SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionRegionNumber(regionUserNumber,MeshUserNumber, &
       & DataProjection,err)
     !DLLEXPORT(cmfe_Mesh_TopologyDataPointsCalculateProjectionRegionNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region.
     INTEGER(INTG), INTENT(IN) :: MeshUserNumber
@@ -44195,9 +44211,9 @@ CONTAINS
     TYPE(MESH_TYPE), POINTER :: MESH
     TYPE(REGION_TYPE), POINTER :: REGION
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_Mesh_TopologyDataPointsCalculateProjectionRegionNumber",err,error,*999)
- 
+
     NULLIFY(REGION)
     NULLIFY(MESH)
     CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
@@ -44222,18 +44238,18 @@ CONTAINS
     EXITS("cmfe_Mesh_TopologyDataPointsCalculateProjectionRegionNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionRegionNumber
-  
-  !  
+
+  !
   !================================================================================================================================
-  !  
+  !
 
   !>Calculate mesh data points topology in an interface identified by a user number based on projection
   SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber(parentRegionUserNumber,interfaceUserNumber, &
       & MeshUserNumber,DataProjection,err)
     !DLLEXPORT(cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber)
-  
+
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentregionUserNumber !<The user number of the region.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the region.
@@ -44244,9 +44260,9 @@ CONTAINS
     TYPE(REGION_TYPE), POINTER :: PARENT_REGION
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber",err,error,*999)
- 
+
     NULLIFY(PARENT_REGION)
     NULLIFY(INTERFACE)
     NULLIFY(MESH)
@@ -44256,7 +44272,7 @@ CONTAINS
       IF(ASSOCIATED(INTERFACE)) THEN
         CALL MESH_USER_NUMBER_FIND(MeshUserNumber,INTERFACE,MESH,err,error,*999)
         IF(ASSOCIATED(MESH)) THEN
-          CALL MeshTopologyDataPointsCalculateProjection(MESH,DataProjection%dataProjection,err,error,*999)        
+          CALL MeshTopologyDataPointsCalculateProjection(MESH,DataProjection%dataProjection,err,error,*999)
         ELSE
           localError="A mesh with an user number of "//TRIM(NumberToVString(MeshUserNumber,"*",err,error))// &
             & " does not exist on the region with an user number of "//TRIM(NumberToVString(parentregionUserNumber, &
@@ -44280,34 +44296,34 @@ CONTAINS
     EXITS("cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber
-  
-  !  
+
+  !
   !================================================================================================================================
-  !  
-  
+  !
+
   !>Calculate mesh data points topology identified by object based on projection
   SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionObj(Mesh,DataProjection,err)
     !DLLEXPORT(cmfe_Mesh_TopologyDataPointsCalculateProjectionObj)
-  
+
   !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: Mesh !<The mesh to calculate data points topology for
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: DataProjection !<The data projection
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
-  
+
     ENTERS("cmfe_Mesh_TopologyDataPointsCalculateProjectionObj",err,error,*999)
-    
+
     CALL MeshTopologyDataPointsCalculateProjection(Mesh%mesh,DataProjection%dataProjection,err,error,*999)
- 
+
     EXITS("cmfe_Mesh_TopologyDataPointsCalculateProjectionObj")
     RETURN
 999 ERRORS("cmfe_Mesh_TopologyDataPointsCalculateProjectionObj",err,error)
     EXITS("cmfe_Mesh_TopologyDataPointsCalculateProjectionObj")
     CALL cmfe_HandleError(Err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionObj
 
   !
@@ -45335,7 +45351,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_MeshElements_UserNumberSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -45664,7 +45680,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the number of nodes at a node in a mesh identified by an user number. 
+  !>Returns the number of nodes at a node in a mesh identified by an user number.
   SUBROUTINE cmfe_MeshNodes_NumberOfNodesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,numberOfNodes,err)
     !DLLEXPORT(cmfe_MeshNodes_NumberOfNodesGetNumber)
 
@@ -45733,13 +45749,13 @@ CONTAINS
 999 ERRORSEXITS("cmfe_MeshNodes_NumberOfNodesGetObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_MeshNodes_NumberOfNodesGetObj
 
   !
   !================================================================================================================================
   !
-  !>Returns the number of derivatives at a node in a mesh identified by an user number. 
+  !>Returns the number of derivatives at a node in a mesh identified by an user number.
   SUBROUTINE cmfe_MeshNodes_NumberOfDerivativesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,userNodeNumber, &
     & numberOfDerivatives,err)
     !DLLEXPORT(cmfe_MeshNodes_NumberOfDerivativesGetNumber)
@@ -45818,7 +45834,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the derivatives at a node in a mesh identified by an user number. 
+  !>Returns the derivatives at a node in a mesh identified by an user number.
   SUBROUTINE cmfe_MeshNodes_DerivativesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,userNodeNumber, &
     & derivatives,err)
     !DLLEXPORT(cmfe_MeshNodes_DerivativesGetNumber)
@@ -45897,7 +45913,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the number of version at a derivative for a node in a mesh identified by an user number. 
+  !>Returns the number of version at a derivative for a node in a mesh identified by an user number.
   SUBROUTINE cmfe_MeshNodes_NumberOfVersionsGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,derivativeNumber, &
     & userNodeNumber,numberOfVersions,err)
     !DLLEXPORT(cmfe_MeshNodes_NumberOfVersionsGetNumber)
@@ -47232,7 +47248,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Nodes_UserNumberSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -47276,7 +47292,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the user numbers for a set of nodes identified by an object. 
+  !>Sets/changes the user numbers for a set of nodes identified by an object.
   SUBROUTINE cmfe_Nodes_UserNumbersAllSetObj(nodes,nodeUserNumbers,err)
     !DLLEXPORT(cmfe_Nodes_UserNumbersAllSetObj)
 
@@ -49007,7 +49023,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the size of the specification for.
-    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specification array. 
+    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specification array.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49043,7 +49059,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the size of the specification for.
-    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specification array. 
+    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specification array.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -51611,7 +51627,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_DynamicTimesSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -51660,7 +51676,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationArbitraryPathSetNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -51676,7 +51692,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationArbitraryPathSetObj",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationArbitraryPathSet(solver%solver,arbitraryPath,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationArbitraryPathSetObj")
@@ -51687,7 +51703,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationArbitraryPathSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -51734,7 +51750,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationClearNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -51749,7 +51765,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationClearObj",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationClear(solver%solver,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationClearObj")
@@ -51759,7 +51775,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationClearObj
-  
+
   !
   !================================================================================================================================
   !
@@ -51828,7 +51844,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationFieldSetNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -51845,7 +51861,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationFieldSetObj",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationFieldSet(solver%solver,field%field,variableType,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationFieldSetObj")
@@ -51856,7 +51872,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationFieldSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -51905,7 +51921,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetNumber0
-  
+
   !
   !================================================================================================================================
   !
@@ -51921,7 +51937,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationMatrixSetObj0",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationMatrixSet(solver%solver,matrix,1,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationMatrixSetObj0")
@@ -51932,7 +51948,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetObj0
-  
+
   !
   !================================================================================================================================
   !
@@ -51982,7 +51998,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetNumber1
-  
+
   !
   !================================================================================================================================
   !
@@ -51999,7 +52015,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationMatrixSetObj1",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationMatrixSet(solver%solver,matrix,loadIncrementIdx,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationMatrixSetObj1")
@@ -52010,7 +52026,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetObj1
-  
+
   !
   !================================================================================================================================
   !
@@ -52059,7 +52075,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -52075,7 +52091,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetObj",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationNumberOfLoadIncrementsSet(solver%solver,numberOfIncrements,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetObj")
@@ -52086,7 +52102,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationNoLoadIncrementsSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -52137,7 +52153,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetNumber0
-  
+
   !
   !================================================================================================================================
   !
@@ -52155,7 +52171,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationRotationSetObj0",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationRotationSet(solver%solver,pivotPoint,axis,angle,1,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationRotationSetObj0")
@@ -52166,7 +52182,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetObj0
-  
+
   !
   !================================================================================================================================
   !
@@ -52218,7 +52234,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetNumber1
-  
+
   !
   !================================================================================================================================
   !
@@ -52237,7 +52253,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationRotationSetObj1",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationRotationSet(solver%solver,pivotPoint,axis,angle,loadIncrementIdx,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationRotationSetObj1")
@@ -52248,7 +52264,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetObj1
-  
+
   !
   !================================================================================================================================
   !
@@ -52297,7 +52313,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationScalingsSetNumber
-  
+
   !
   !================================================================================================================================
   !
@@ -52313,7 +52329,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationScalingsSetObj",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationScalingsSet(solver%solver,scalings,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationScalingsSetObj")
@@ -52324,7 +52340,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationScalingsSetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -52373,7 +52389,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetNumber0
-  
+
   !
   !================================================================================================================================
   !
@@ -52389,7 +52405,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationTranslationSetObj0",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationTranslationSet(solver%solver,translation,1,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationTranslationSetObj0")
@@ -52400,7 +52416,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetObj0
-  
+
   !
   !================================================================================================================================
   !
@@ -52450,7 +52466,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetNumber1
-  
+
   !
   !================================================================================================================================
   !
@@ -52467,7 +52483,7 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_Solver_GeometricTransformationTranslationSetObj1",err,error,*999)
-    
+
     CALL Solver_GeometricTransformationTranslationSet(solver%solver,translation,loadIncrementIdx,err,error,*999)
 
     EXITS("cmfe_Solver_GeometricTransformationTranslationSetObj1")
@@ -53234,7 +53250,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the library type for.
-    INTEGER(INTG), INTENT(IN) :: icntl !<The MUMPS ICNTL integer control parameter 
+    INTEGER(INTG), INTENT(IN) :: icntl !<The MUMPS ICNTL integer control parameter
     INTEGER(INTG), INTENT(IN) :: ivalue !<The MUMPS ICNTL integer value to set: ICNTL(icntl)=ivalue
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -53261,7 +53277,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the library type for.
-    INTEGER(INTG), INTENT(IN) :: icntl !<The MUMPS CNTL integer control parameter 
+    INTEGER(INTG), INTENT(IN) :: icntl !<The MUMPS CNTL integer control parameter
     REAL(DP), INTENT(IN) :: val !<The MUMPS CNTL real value to set: CNTL(icntl)=val
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -54729,7 +54745,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_NewtonCellMLSolverGetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -54815,8 +54831,8 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_NewtonConvergenceTestTypeSetNumber1
-  
-  ! 
+
+  !
   !================================================================================================================================
   !
 
@@ -54845,7 +54861,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Sets/changes the line search alpha for an Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchAlphaSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,alpha,err)
     !DLLEXPORT(cmfe_Solver_NewtonLineSearchAlphaSetNumber0)
@@ -56619,7 +56635,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_QuasiNewtonCellMLSolverGetObj
-  
+
   !
   !================================================================================================================================
   !
@@ -56705,8 +56721,8 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Solver_QuasiNewtonConvergenceTestTypeSetNumber1
-  
-  ! 
+
+  !
   !================================================================================================================================
   !
 
@@ -58953,12 +58969,12 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Set the time dependence type of interface matrices
   SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeSet(interfaceCondition, &
     & interfaceMatrixIndex,hasTranspose,timeDependenceTypes,Err)
     !DLLEXPORT(cmfe_InterfaceMatrices_TimeDependenceTypeSet)
-    
+
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to add.
     INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<Time dependence types for the given interface matrix and it's transpose (if any). \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
@@ -58967,9 +58983,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("cmfe_InterfaceMatrices_TimeDependenceTypeSet",err,error,*999)
-    
+
     IF(SIZE(timeDependenceTypes)/=2) CALL FlagError("Invalid size of time dependence types array. Must be 2.",err,error,*999)
     IF(timeDependenceTypes(1)>0.AND.timeDependenceTypes(1)<=CMFE_NUMBER_OF_INTERFACE_MATRIX_TYPES) THEN
       CALL InterfaceMatrix_TimeDependenceTypeSet(interfaceCondition%interfaceCondition, &
@@ -58994,25 +59010,25 @@ CONTAINS
         & " ."
       CALL FlagError(LOCAL_ERROR,err,error,*999)
     ENDIF
-    
+
     EXITS("cmfe_InterfaceMatrices_TimeDependenceTypeSet")
     RETURN
 999 ERRORS("cmfe_InterfaceMatrices_TimeDependenceTypeSet",err,error)
     EXITS("cmfe_InterfaceMatrices_TimeDependenceTypeSet")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeSet
 
   !
   !================================================================================================================================
   !
-  
+
   !>Get the time dependence type of interface matrices
   SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeGet(interfaceCondition, &
     & interfaceMatrixIndex,hasTranspose,timeDependenceTypes,Err)
     !DLLEXPORT(cmfe_InterfaceMatrices_TimeDependenceTypeGet)
-    
+
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to add.
     INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<Time dependence types for the given interface matrix and it's transpose (if any). \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
@@ -59020,9 +59036,9 @@ CONTAINS
     LOGICAL, INTENT(IN) :: hasTranspose
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code
     !Local Variables
-   
+
     ENTERS("cmfe_InterfaceMatrices_TimeDependenceTypeGet",err,error,*999)
-    
+
     IF(SIZE(timeDependenceTypes)/=2) CALL FlagError("Invalid size of time dependence types array. Must be 2.",err,error,*999)
     CALL InterfaceMatrix_TimeDependenceTypeGet(interfaceCondition%interfaceCondition, &
       & interfaceMatrixIndex,.FALSE.,timeDependenceTypes(1),err,error,*999)
@@ -59030,16 +59046,16 @@ CONTAINS
       CALL InterfaceMatrix_TimeDependenceTypeGet(interfaceCondition%interfaceCondition, &
         & interfaceMatrixIndex,.TRUE.,timeDependenceTypes(2),err,error,*999)
     ENDIF
-    
+
     EXITS("cmfe_InterfaceMatrices_TimeDependenceTypeGet")
     RETURN
 999 ERRORS("cmfe_InterfaceMatrices_TimeDependenceTypeGet",err,error)
     EXITS("cmfe_InterfaceMatrices_TimeDependenceTypeGet")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeGet
-  
+
   !
   !================================================================================================================================
   !
@@ -59729,7 +59745,7 @@ CONTAINS
   !>Update the bioelectrics geometric field by interpolating the finite elasticity geometric field
   SUBROUTINE cmfe_BioelectricsFiniteElasticity_UpdateGeometricField(controlLoop,calcClosestGaussPoint,err)
     !DLLEXPORT(cmfe_BioelectricsFiniteElasticity_UpdateGeometricField)
-  
+
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The bioelectrics control loop
     LOGICAL, INTENT(IN) :: calcClosestGaussPoint
@@ -59967,14 +59983,14 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: userNumber !< The user number to assign to the new coordinate system.
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !< On return, the newly created coordinate system.
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
-    
+
     ENTERS("cmfe_FieldML_InputCoordinateSystemCreateStartObjVS",err,error,*999)
-    
+
 #ifdef WITH_FIELDML
-    
+
     CALL FieldmlInput_CoordinateSystemCreateStart( fieldml%fieldmlInfo, evaluatorName, coordinateSystem%coordinateSystem, &
       & userNumber, err, error, *999 )
-    
+
 #else
     CALL FlagError("Must compile with WITH_FIELDML ON to use FieldML functionality.",ERR,error,*999)
 #endif
@@ -59983,9 +59999,9 @@ CONTAINS
     RETURN
 999 ERRORS("cmfe_FieldML_InputCoordinateSystemCreateStartObjVS",err,error)
     EXITS("cmfe_FieldML_InputCoordinateSystemCreateStartObjVS")
-    CALL cmfe_HandleError(err,error)    
+    CALL cmfe_HandleError(err,error)
     RETURN
-   
+
   END SUBROUTINE cmfe_FieldML_InputCoordinateSystemCreateStartObjVS
 
   !
@@ -60021,7 +60037,7 @@ CONTAINS
     EXITS("cmfe_FieldML_InputCoordinateSystemCreateStartNumberVS")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_FieldML_InputCoordinateSystemCreateStartNumberVS
 
   !
@@ -60055,7 +60071,7 @@ CONTAINS
     EXITS("cmfe_FieldML_InputCoordinateSystemCreateStartObjC")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_FieldML_InputCoordinateSystemCreateStartObjC
 
   !
@@ -60092,7 +60108,7 @@ CONTAINS
     EXITS("cmfe_FieldML_InputCoordinateSystemCreateStartNumberC")
     CALL cmfe_HandleError(err,error)
     RETURN
-    
+
   END SUBROUTINE cmfe_FieldML_InputCoordinateSystemCreateStartNumberC
 
   !
@@ -60426,11 +60442,11 @@ CONTAINS
     CALL MESH_USER_NUMBER_TO_MESH( meshNumber, region, mesh, err, error, *999 )
 
     CALL FIELDML_INPUT_CREATE_MESH_COMPONENT( fieldml%fieldmlInfo, mesh, componentNumber, evaluatorName, err, error, *999 )
-    
+
 #else
-    
+
     CALL FlagError("Must compile with WITH_FIELDML ON to use FieldML functionality.",ERR,error,*999)
-    
+
 #endif
 
     EXITS("cmfe_FieldML_InputCreateMeshComponentNumberVS")
@@ -61674,14 +61690,386 @@ CONTAINS
     EXITS("cmfe_FieldMLIO_GetSession")
     RETURN
 999 ERRORSEXITS("cmfe_FieldMLIO_GetSession",err,error)
-    CALL cmfe_HandleError( err, error )
+    CALL cmfe_HandleError(err,error)
     RETURN
 
   END SUBROUTINE cmfe_FieldMLIO_GetSession
 
-  !
-  !================================================================================================================================
-  !
+
+! =======================================================================================================================
+! THe following subroutine  is used set TPWGT parameter.
+! =======================================================================================================================
+
+  SUBROUTINE cmfe_Decomposition_DecompositionTpwgtSet(decomposition,TPWGT,err)
+
+    !Argument variables
+    TYPE(cmfe_DecompositionType), INTENT(INOUT) :: decomposition !<The decomposition to set tpwgt for.
+    REAL(DP),INTENT(IN)                      :: TPWGT(:) !<Array representing TPWGTS.
+    INTEGER(INTG), INTENT(OUT)               :: err !<The error code.
+
+    !Local variables
+    ENTERS("CMFE_Decomposition_DecompositionTpwgtSet",err,error,*999)
+
+    CALL DECOMPOSITION_TPWGT_SET(decomposition%decomposition, TPWGT, err, error, *999)
+
+    EXITS("CMFE_Decomposition_DecompositionTpwgtSet")
+    RETURN
+999 ERRORSEXITS("CMFE_Decomposition_DecompositionTpwgtSet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+ END SUBROUTINE cmfe_Decomposition_DecompositionTpwgtSet
+
+! =======================================================================================================================
+! THe following subroutine  is used to activate vertex based partitioning.
+! =======================================================================================================================
+
+  SUBROUTINE cmfe_Decomposition_NodeBasedDecompositionSet(decomposition,NOdeBasedDecomposition,err)
+
+    !Argument variables
+    TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the type for.
+    LOGICAL, INTENT(IN)                      :: NOdeBasedDecomposition
+    INTEGER(INTG), INTENT(OUT)               :: err !<The error code.
+
+    !Local variables
+    ENTERS("cmfe_Decomposition_NodeBasedDecompositionSet",err,error,*999)
+
+    CALL DECOMPOSITION_NODE_BASED_DECOMPOSITION_SET(decomposition%decomposition, NOdeBasedDecomposition, err, error, *999)
+
+    EXITS("cmfe_Decomposition_NodeBasedDecompositionSet")
+    RETURN
+999 ERRORSEXITS("CMFE_Decomposition_DecompositionTpwgtSet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+ END SUBROUTINE cmfe_Decomposition_NodeBasedDecompositionSet
+
+
+! =======================================================================================================================
+! THe following subroutine  is used to set UBVEC parameter.
+! =======================================================================================================================
+
+  SUBROUTINE cmfe_Decomposition_DecompositionUBVECSet(decomposition,UBVEC,err)
+
+    !Argument variables
+    TYPE(cmfe_DecompositionType), INTENT(INOUT) :: decomposition !<The decomposition to get the type for.
+    REAL(DP),INTENT(IN)                         :: UBVEC(:)
+    INTEGER(INTG), INTENT(OUT)                  :: err !<The error code.
+
+    !Local variables
+    ENTERS("cmfe_Decomposition_DecompositionUbvecSet",err,error,*999)
+
+    CALL DECOMPOSITION_UBVEC_SET(decomposition%decomposition, UBVEC, err, error, *999)
+
+    EXITS("cmfe_Decomposition_DecompositionUbvecSet")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposition_DecompositionUbvecSet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+ END SUBROUTINE cmfe_Decomposition_DecompositionUBVECSet
+
+
+! =======================================================================================================================
+! THe following subroutine  is used to set number of vertex constraints to be balanced.
+! =======================================================================================================================
+
+  SUBROUTINE cmfe_Decomposition_NumberOfConstraintsSet(decomposition,NUmberOfCOnstraints,err)
+
+    !Argument variables
+    TYPE(cmfe_DecompositionType), INTENT(INOUT) :: decomposition !<The decomposition to get the type for.
+    INTEGER(INTG), INTENT(IN)                   :: NUmberOfCOnstraints
+    INTEGER(INTG), INTENT(OUT)                  :: err !<The error code.
+
+    !Local variables
+    ENTERS("cmfe_Decomposition_NumberOfConstraintsSet",err,error,*999)
+
+    CALL DECOMPOSITION_NUMBER_OF_CONSTRAINTS_SET(decomposition%decomposition, NUmberOfCOnstraints, err, error, *999)
+
+    EXITS("cmfe_Decomposition_NumberOfConstraintsSet")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposition_NumberOfConstraintsSet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposition_NumberOfConstraintsSet
+
+
+
+! =======================================================================================================================
+! THe following subroutine  is used to impose vertex weights on the graph.
+! =======================================================================================================================
+  SUBROUTINE cmfe_Decomposition_NodeWeightSet(Decomposition,NOdeWeightSet,err)
+
+   !Argument variables
+    TYPE(cmfe_DecompositionType), INTENT(INOUT) :: Decomposition !<The decomposition object to set node weights for.
+    INTEGER(INTG), INTENT(IN)                   :: NOdeWeightSet(:) !<A set of node weights to be assigned.
+    INTEGER(INTG), INTENT(OUT)                  :: err !<The error code.
+
+    !Local variables
+    ENTERS("cmfe_Decomposition_NodeWeightSet.",err,error,*999)
+
+    CALL DECOMPOSITION_NODE_WEIGHT_SET(decomposition%decomposition, NOdeWeightSet, err, error, *999)
+
+    EXITS("cmfe_Decomposition_NodeWeightSet.")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposition_NodeWeightSet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposition_NodeWeightSet
+
+! =======================================================================================================================
+
+  !>Initialises a cmfe_CoupledDecompositionType object.
+  SUBROUTINE cmfe_CoupledDecomposition_Initialise(CoupledDecomposition, err)
+    !DLLEXPORT(cmfe_MeshEmbedding_Initialise)
+    !Argument variables
+    TYPE(cmfe_CoupledDecompositionType), INTENT(OUT) ::  CoupledDecomposition !<The CoupledDecompositionType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+
+    ENTERS("cmfe_CoupledDecomposition_Initialise",err,error,*999)
+
+    NULLIFY(CoupledDecomposition%CoupledDecomposition)
+
+    EXITS("cmfe_CoupledDecomposition_Initialise")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_Initialise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CoupledDecomposition_Initialise
+
+! =======================================================================================================================
+  !Create start cmfe_CoupledDecompositionType object.
+! =======================================================================================================================
+
+  SUBROUTINE cmfe_CoupledDecomposition_CreateStart(CoupledDecomposition, CoupledDecompositionUserNUmber, Err)
+
+    !Argument variables
+    TYPE(cmfe_CoupledDecompositionType), INTENT(OUT) ::  CoupledDecomposition !<The CoupledDecompositionType object to create stqart.
+    INTEGER(INTG)                                    ::  CoupledDecompositionUserNUmber !<The user number of the COupled decomposition to create start.
+    INTEGER(INTG), INTENT(OUT)                       ::  Err !<The error code.
+
+    ENTERS("cmfe_CoupledDecomposition_CreateStart",err,error,*999)
+
+    CALL  COUPLED_DECOMPOSITION_CREATE_START(CoupledDecomposition%CoupledDecomposition, &
+       & CoupledDecompositionUserNUmber, err, error, *999)
+
+
+    EXITS("cmfe_CoupledDecomposition_CreateStart")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_CreateStart",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE  cmfe_CoupledDecomposition_CreateStart
+
+
+ !=================================================================================================================
+  ! The following subroutine adds the geometric field information of the coupled mesh graph G_{i} in cmfe_CoupledDecomposition object.
+ !=================================================================================================================
+
+  SUBROUTINE cmfe_CoupledDecomposition_AddCoupledMesh(COupledDecomposition, GeometricField, err)
+
+
+    !Argument variables
+    TYPE(cmfe_CoupledDecompositionType), INTENT(INOUT) :: COupledDecomposition !<The cmfe_DecompositionType object to initialise.
+    TYPE(cmfe_FieldType), INTENT(IN)                   :: GeometricField !<cmfe_FieldType object representing the geometric field of the coupled mesh graph.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_CoupledDecomposition_AddMesh",err,error,*999)
+
+    CALL COUPLED_DECOMPOSITION_ADD_COUPLED_MESH(CoupledDecomposition%CoupledDecomposition, GeometricField%field, err, error, *999)
+
+    EXITS("cmfe_CoupledDecomposition_AddMesh")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_AddMesh",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CoupledDecomposition_AddCoupledMesh
+
+ !=================================================================================================================
+  ! The following subroutine adds the geometric field information of the interface mesh graph G_{I} in cmfe_CoupledDecomposition object.
+ !=================================================================================================================
+
+  SUBROUTINE cmfe_CoupledDecomposition_AddInterface(COupledDecomposition, Field, err)
+
+    !Argument variables
+    TYPE(cmfe_CoupledDecompositionType), INTENT(INOUT)  :: COupledDecomposition !<The cmfe_CoupledDecompositionType object to initialise.
+    TYPE(cmfe_FieldType), INTENT(IN)                    :: Field !<cmfe_FieldType object representing the geometric field of the interface mesh graph.
+    INTEGER(INTG), INTENT(OUT)                          :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_CoupledDecomposition_AddInterface",err,error,*999)
+
+    CALL COUPLED_DECOMPOSITION_ADD_INTERFACE(CoupledDecomposition%CoupledDecomposition, Field%field, err, error, *999)
+
+    EXITS("cmfe_CoupledDecomposition_AddInterface")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_AddInterface",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CoupledDecomposition_AddInterface
+
+ !=================================================================================================================
+ ! The "coupling aware" partitioning algorithm is implemented in the following subroutine.
+  SUBROUTINE cmfe_CoupledDecomposition_CreateFinish(CoupledDecomposition, err)
+
+    !Argument variables
+    TYPE(cmfe_CoupledDecompositionType), INTENT(INOUT) ::  CoupledDecomposition !<The cmfe_CoupledDecompositionType object to finish creating.
+    INTEGER(INTG), INTENT(OUT)                         ::  err !<The error code.
+
+    !Local Variables
+    ENTERS("cmfe_CoupledDecomposition_CreateFinish",err,error,*999)
+
+    CALL COUPLED_DECOMPOSITION_CREATE_FINISH(CoupledDecomposition%CoupledDecomposition, err, error, *999)
+
+    EXITS("cmfe_CoupledDecomposition_CreateFinish")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_CreateFinish",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE  cmfe_CoupledDecomposition_CreateFinish
+
+ !=================================================================================================================
+ ! The following subroutine assigns the vertex-based decomposition field represented by Decomposition%Decomposition%NODE_DOMAIN(:) to the Field object.
+  SUBROUTINE cmfe_Decomposition_AssignDecompositionField(Field,Decomposition,VariableType, Err)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(INOUT)      :: Field !<cmfe_FieldType object to be assigned the vertex-based decomposition field.
+    TYPE(cmfe_DecompositionType), INTENT(IN) :: Decomposition  !<cmfe_DecompositionType object whose member Decomposition%Decomposition%NODE_DOMAIN ...
+                                                               ! ... is to be assigned to the Field object .
+    INTEGER(INTG), INTENT(IN)                :: VariableType   !<The variable type of the Field object to set the vertex-based decomposition field.
+    INTEGER(INTG), INTENT(OUT)               :: Err !<The error code.
+
+    ENTERS("cmfe_Decomposition_AssignDecompositionField",err,error,*999)
+
+    CALL DECOMPOSITION_ASSIGN_DECOMPOSITION_FIELD(Field%Field,Decomposition%Decomposition, &
+      & VariableType,ERR,ERROR,*999)
+
+    EXITS("cmfe_Decomposition_AssignDecompositionField")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposition_AssignDecompositionField",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE  cmfe_Decomposition_AssignDecompositionField
+ !================================================================================================================
+ ! THis subroutine updates the decomposition object associated with the coupled mesh G_i.
+ !================================================================================================================
+  SUBROUTINE cmfe_CoupledDecomposition_Update(CoupledDecomposition,Decomposition, err)
+
+    !Argument variables
+    TYPE(cmfe_CoupledDecompositionType), INTENT(IN) :: CoupledDecomposition !<cmfe_CoupledDecompositionType object to get the node domains from.
+    TYPE(cmfe_DecompositionType), INTENT(INOUT)     :: Decomposition !<cmfe_DecompositionType object representing decomposition object of the interface mesh graph.
+    INTEGER(INTG), INTENT(OUT)                      :: err !<The error code.
+
+    ENTERS("cmfe_CoupledDecomposition_Update",err,error,*999)
+
+    CALL COUPLED_DECOMPOSITION_UPDATE_DECOMPOSITION(CoupledDecomposition%CoupledDecomposition,Decomposition%Decomposition, &
+      & err,error,*999)
+
+    EXITS("cmfe_CoupledDecomposition_Update")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_Update",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE  cmfe_CoupledDecomposition_Update
+
+ !================================================================================================================
+ ! THis subroutine updates the decomposition object associated with the interface coupled mesh G_I.
+ !================================================================================================================
+  SUBROUTINE cmfe_CoupledDecomposition_UpdateInterface(CoupledDecomposition,Decomposition, err)
+    !Argument variables
+    TYPE(cmfe_CoupledDecompositionType), INTENT(IN) :: CoupledDecomposition !<cmfe_CoupledDecompositionType object to get the node domains from.
+    TYPE(cmfe_DecompositionType), INTENT(INOUT)     :: Decomposition !< cmfe_DecompositionType object representing decomposition object of the coupled mesh graph.
+    INTEGER(INTG), INTENT(OUT)                      :: err !<The error code.
+
+    ENTERS("cmfe_CoupledDecomposition_UpdateInterface",err,error,*999)
+
+    CALL COUPLED_DECOMPOSITION_UPDATE_INTERFACE_DECOMPOSITION( &
+      & CoupledDecomposition%CoupledDecomposition,Decomposition%Decomposition, &
+      & ERR,ERROR,*999)
+
+    EXITS("cmfe_CoupledDecomposition_UpdateInterface")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_UpdateInterface",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE  cmfe_CoupledDecomposition_UpdateInterface
+
+ !================================================================================================================
+ ! THis subroutine nullify the coupled mesh geometric field.
+ !================================================================================================================
+  SUBROUTINE cmfe_CoupledDecomposition_NullifyGeometry(Field, err)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(INOUT)      :: Field !<cmfe_FieldType object to nullify.
+    INTEGER(INTG), INTENT(OUT)               :: err !<The error code.
+
+    ENTERS("cmfe_CoupledDecomposition_NullifyGeometry",err,error,*999)
+
+    NULLIFY(Field%Field)
+
+    EXITS("cmfe_CoupledDecomposition_NullifyGeometry")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_NullifyGeometry",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE  cmfe_CoupledDecomposition_NullifyGeometry
+
+ !================================================================================================================
+ ! ! THis subroutine nullify the geometric field associated with the field.
+ !================================================================================================================
+  SUBROUTINE cmfe_CoupledDecomposition_NullifyRegion(Region, err)
+    !Argument variables
+    TYPE(cmfe_RegionType), INTENT(INOUT)        :: Region !<cmfe_RegionType object to nullify.
+    INTEGER(INTG), INTENT(OUT)                  :: err !<The error code.
+
+    ENTERS("cmfe_CoupledDecomposition_NullifyRegion.",err,error,*999)
+
+    NULLIFY(Region%Region%Fields)
+    CALL FIELDS_INITIALISE(Region%Region,err,error,*999)
+
+    EXITS("cmfe_CoupledDecomposition_NullifyRegion.")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_NullifyRegion.",Err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE  cmfe_CoupledDecomposition_NullifyRegion
+
+ !================================================================================================================
+ ! THis subroutine nullify the interface geometric field.
+ !================================================================================================================
+  SUBROUTINE cmfe_CoupledDecomposition_NullifyInterface(Interface, err)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceType), INTENT(INOUT)     :: Interface !<cmfe_InterfaceType object to nullify the geometric field of.
+    INTEGER(INTG), INTENT(OUT)                  :: err !<The error code.
+
+    ENTERS("cmfe_CoupledDecomposition_NullifyInterface.",err,error,*999)
+
+    NULLIFY(Interface%Interface%Fields)
+    CALL FIELDS_INITIALISE(Interface%Interface,err,error,*999)
+
+    EXITS("cmfe_CoupledDecomposition_NullifyInterface.")
+    RETURN
+999 ERRORSEXITS("cmfe_CoupledDecomposition_NullifyInterface",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE  cmfe_CoupledDecomposition_NullifyInterface
+
+ !================================================================================================================
 
 
 END MODULE OpenCMISS_Iron
